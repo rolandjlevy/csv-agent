@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>csv-agent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 640px;
+      margin: 4rem auto;
+      padding: 0 1.5rem;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    pre {
+      background: #1a1a1a;
+      color: #f4f4f4;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>csv-agent</h1>
+  <p>
+    A minimal AI agent that answers questions about CSV data using Claude
+    and a small tool-use loop. This is currently a CLI tool — there's no
+    web UI yet.
+  </p>
+  <pre>node agent.js data/transactions.csv "What did I spend most on?"</pre>
+  <p>
+    See the <a href="https://github.com/rolandjlevy/csv-agent">repository</a>
+    for setup instructions.
+  </p>
+</body>
+</html>
