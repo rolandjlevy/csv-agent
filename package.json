@@ -1,0 +1,30 @@
+{
+  "name": "csv-agent",
+  "version": "1.0.0",
+  "description": "A minimal AI agent that answers questions about CSV data using Claude and a small tool-use loop.",
+  "main": "agent.js",
+  "scripts": {
+    "start": "node agent.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rolandjlevy/csv-agent.git"
+  },
+  "keywords": [
+    "agent",
+    "claude",
+    "csv"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/rolandjlevy/csv-agent/issues"
+  },
+  "homepage": "https://github.com/rolandjlevy/csv-agent#readme",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "csv-parse": "^5.5.6",
+    "dotenv": "^16.4.5"
+  }
+}
