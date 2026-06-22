@@ -87,6 +87,23 @@ const TOOL_DEFINITIONS = [
   },
 ];
 
+const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+function startSpinner(label) {
+  if (!process.stdout.isTTY) return null; // \r can't overwrite a redirected stream
+
+  let i = 0;
+  return setInterval(() => {
+    process.stdout.write(`\r${SPINNER_FRAMES[i = (i + 1) % SPINNER_FRAMES.length]} ${label}`);
+  }, 80);
+}
+
+function stopSpinner(interval) {
+  if (!interval) return;
+  clearInterval(interval);
+  process.stdout.write('\r\x1b[K'); // clear the spinner line
+}
+
 async function executeTool(name, input) {
   switch (name) {
     case 'read_csv':
@@ -114,13 +131,19 @@ async function runAgent(filePath, question) {
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     console.log(`\n🔄 Turn ${turn + 1}`);
 
-    const response = await client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
-      tools: TOOL_DEFINITIONS,
-      messages,
-    });
+    const spinner = startSpinner('Thinking...');
+    let response;
+    try {
+      response = await client.messages.create({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        system: SYSTEM_PROMPT,
+        tools: TOOL_DEFINITIONS,
+        messages,
+      });
+    } finally {
+      stopSpinner(spinner);
+    }
 
     if (response.stop_reason === 'tool_use') {
       // Claude can ask for more than one tool in a single turn — every
