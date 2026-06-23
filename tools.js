@@ -13,6 +13,10 @@ const MONTH_NAMES = [
 
 const MAX_ROWS_RETURNED = 50;
 
+// Generated reports always land here, regardless of the path the model
+// passes — keeps the project root clean and the output predictable.
+const REPORTS_DIR = 'reports';
+
 // Shared by read_csv and analyse so analyse always sees every row, not just
 // the MAX_ROWS_RETURNED preview Claude gets back from read_csv — and so
 // Claude never has to copy the dataset back to us as a tool input.
@@ -141,13 +145,16 @@ function analyse({ file_path, operation, column, group_by, filter }) {
 }
 
 function writeReport({ content, file_path }) {
-  const absolutePath = path.resolve(file_path);
+  // Ignore any directory the model put in file_path — only keep the file
+  // name and always write inside REPORTS_DIR.
+  const relativePath = path.join(REPORTS_DIR, path.basename(file_path));
+  const absolutePath = path.resolve(relativePath);
   fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
   fs.writeFileSync(absolutePath, content, 'utf8');
 
   return {
     success: true,
-    file_path,
+    file_path: relativePath,
     bytes: Buffer.byteLength(content, 'utf8'),
   };
 }

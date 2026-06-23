@@ -3,4 +3,4 @@ node_modules/
 *.log
 .next/
 tsconfig.tsbuildinfo
-report.md
+reports/
