@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: #09090b;
+  --color-bg-surface: #18181b;
+  --color-bg-elevated: #27272a;
+  --color-border: #3f3f46;
+  --color-border-subtle: #27272a;
+  --color-text: #fafafa;
+  --color-text-muted: #a1a1aa;
+  --color-text-faint: #71717a;
+  --color-accent: #22c55e;
+  --color-accent-muted: rgba(34, 197, 94, 0.1);
+  --color-tool-blue: #3b82f6;
+  --color-tool-blue-bg: rgba(59, 130, 246, 0.08);
+  --color-thinking-amber: #f59e0b;
+  --color-thinking-bg: rgba(245, 158, 11, 0.06);
+  --color-error: #ef4444;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+@keyframes dropzone-pulse {
+  0%,
+  100% {
+    border-color: var(--color-border);
+  }
+  50% {
+    border-color: var(--color-text-faint);
+  }
+}
+
+.dropzone-idle:hover {
+  animation: dropzone-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes tool-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--color-tool-blue-bg);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--color-tool-blue-bg);
+  }
+}
+
+.tool-card-pending {
+  animation: tool-pulse 1.6s ease-in-out infinite;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
+}
