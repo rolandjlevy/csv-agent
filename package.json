@@ -4,7 +4,11 @@
   "description": "A minimal AI agent that answers questions about CSV data using Claude and a small tool-use loop.",
   "main": "agent.js",
   "scripts": {
-    "start": "node agent.js"
+    "cli": "node agent.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
   },
   "repository": {
     "type": "git",
@@ -25,6 +29,24 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",
     "csv-parse": "^5.5.6",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "framer-motion": "^12.40.0",
+    "next": "15.5.19",
+    "papaparse": "^5.5.4",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-dropzone": "^15.0.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/node": "^22",
+    "@types/papaparse": "^5.3.15",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.19",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^5"
   }
 }

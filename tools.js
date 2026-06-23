@@ -13,16 +13,22 @@ const MONTH_NAMES = [
 
 const MAX_ROWS_RETURNED = 50;
 
-function readCsv({ file_path }) {
+// Shared by read_csv and analyse so analyse always sees every row, not just
+// the MAX_ROWS_RETURNED preview Claude gets back from read_csv — and so
+// Claude never has to copy the dataset back to us as a tool input.
+function parseCsvFile(file_path) {
   const absolutePath = path.resolve(file_path);
   const raw = fs.readFileSync(absolutePath, 'utf8');
 
-  const rows = parse(raw, {
+  return parse(raw, {
     columns: true,
     skip_empty_lines: true,
     trim: true,
   });
+}
 
+function readCsv({ file_path }) {
+  const rows = parseCsvFile(file_path);
   const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
 
   return {
@@ -72,8 +78,9 @@ function applyFilter(rows, filter) {
   });
 }
 
-function analyse({ data, operation, column, group_by, filter }) {
-  const filtered = applyFilter(data, filter);
+function analyse({ file_path, operation, column, group_by, filter }) {
+  const rows = parseCsvFile(file_path);
+  const filtered = applyFilter(rows, filter);
 
   if (operation === 'group') {
     const groups = {};
