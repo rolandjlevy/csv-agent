@@ -2,7 +2,8 @@
 
 A minimal, real AI agent. It takes a CSV file and a question, then
 decides for itself which tools to call — and in what order — to find
-the answer.
+the answer. You can hand it almost any bank's transaction export — it
+adapts the file into a canonical schema first, then runs the loop.
 
 There are two ways to use it: a **CLI** and a **web frontend**. Both run
 the exact same agent loop — the frontend doesn't reimplement anything,
@@ -27,9 +28,29 @@ that sequence at runtime based on the question. That decision-making loop
 is the entire concept behind an "agent": an LLM repeatedly choosing
 actions and observing their results, rather than executing a fixed script.
 
+## Adapting any CSV (the ingestion stage)
+
+The tools expect a canonical `Date,Description,Amount,Category,Bank`
+schema, but real bank exports rarely look like that — they have preamble
+rows, split "Money In"/"Money Out" columns, `£` mojibake, no Category
+column, and so on. So before the loop runs, `lib/csv-adapt.js` normalises
+whatever you give it into that canonical shape.
+
+The split of responsibility mirrors the tools: **the LLM decides, plain
+JavaScript does the work.** Two small one-off LLM calls happen at
+ingestion — `detectProfile()` works out the column mapping and date
+format, and `classifyMerchants()` sorts each unique merchant into one of a
+fixed set of categories. Every row is then transformed deterministically
+in plain JS — no model-side maths, the same property the `analyse` tool
+relies on. Files that are already canonical (`looksCanonical()`) skip the
+LLM entirely and pass straight through at no cost.
+
 ## Project structure
 
 ```
+lib/csv-adapt.js       ← ingestion stage: normalises any bank's CSV into the canonical
+                          schema before the loop (LLM decides the mapping, JS transforms)
+lib/merchant.js        ← merchant-name normalisation shared by the classifier
 lib/agent-core.js      ← the loop itself (read this first) — shared by both versions
 tools.js               ← the three tools, implemented as plain functions (no LLM
                           calls inside them — analyse is just JavaScript math)
@@ -39,12 +60,15 @@ agent.js               ← CLI entry point, wraps lib/agent-core.js with console
 
 src/                   ← Next.js web frontend
 ├── app/
-│   ├── page.tsx           ← the three-state UI (upload → ask → working/answer)
+│   ├── page.tsx           ← UI states: upload → [confirm columns] → ask → working/answer
 │   └── api/
-│       ├── agent/route.ts ← streams the same agent loop as NDJSON
+│       ├── detect/route.ts← detects the adapt profile for an uploaded CSV (JSON)
+│       ├── agent/route.ts ← adapts the CSV then streams the same agent loop as NDJSON
 │       └── sample/route.ts← serves data/transactions.csv to the browser
-├── components/             ← dropzone, question chips, agent feed, answer card, etc.
-├── hooks/use-agent.ts      ← drives the upload → ask → stream lifecycle client-side
+├── components/             ← dropzone, csv preview, column-confirm panel, question chips,
+│                             agent feed, answer card, etc.
+├── hooks/use-agent.ts      ← drives upload → detect → confirm → ask → stream client-side
+├── lib/canonical-preview.ts← client mirror of the deterministic transform (live preview)
 └── types/agent.ts
 ```
 
@@ -80,14 +104,17 @@ node agent.js data/transactions.csv "Write me a monthly spending report and save
 
 (`npm run cli -- data/transactions.csv "..."` works the same way.)
 
-Each question triggers a different sequence of tool calls — that's the
-point. Watch the terminal output: every turn prints which tool Claude
-chose, what input it passed, and what came back, so you can see the
+Before the loop runs you'll see an `🧰 Adapting CSV...` step: the file is
+normalised into the canonical schema (with `🧭` lines reporting what was
+detected), unless it's already canonical, in which case it passes straight
+through. Then each question triggers a different sequence of tool calls —
+that's the point. Watch the terminal output: every turn prints which tool
+Claude chose, what input it passed, and what came back, so you can see the
 decision loop happening live — including a spinner while Claude is
 thinking, and a 💭 line whenever Claude narrates its reasoning before
 calling a tool.
 
-Files involved: `agent.js`, `lib/agent-core.js`, `tools.js`.
+Files involved: `agent.js`, `lib/csv-adapt.js`, `lib/agent-core.js`, `tools.js`.
 
 ## Frontend version
 
@@ -101,7 +128,7 @@ npm run dev
 ```
 
 ```bash
-npm run build && npm run start   # production build
+npm run build && npm start   # production build
 ```
 
 How it works:
@@ -109,15 +136,21 @@ How it works:
 1. You drop a CSV (or click "try with sample data" to load
    `data/transactions.csv`) — it's parsed in the browser with Papaparse
    for the preview table; the raw text is kept in memory.
-2. You pick a predefined question chip or type your own.
-3. The browser POSTs `{ csvData, question }` to `/api/agent`, which writes
-   the CSV to a server-side temp file and runs `lib/agent-core.js` against
-   it — the same loop the CLI uses.
-4. Every step (`turn_start`, `thinking`, `tool_call`, `tool_result`,
+2. The browser POSTs the raw CSV to `/api/detect`, which returns either
+   `{ skipped: true }` (already canonical) or a detected adapt **profile**.
+   If a profile comes back, a **column-confirm panel** appears so you can
+   remap columns; the canonical preview updates live, computed entirely in
+   the browser via `src/lib/canonical-preview.ts` (no server round-trip).
+3. You pick a predefined question chip or type your own.
+4. The browser POSTs `{ csvData, question, profile }` to `/api/agent`,
+   which transforms the CSV using the confirmed profile (skipping
+   re-detection), writes the canonical result to a server-side temp file,
+   and runs `lib/agent-core.js` against it — the same loop the CLI uses.
+5. Every step (`turn_start`, `thinking`, `tool_call`, `tool_result`,
    `answer`, `done`/`error`) is streamed back as one line of NDJSON the
    instant it happens, and rendered live as an animated feed — no
    batching, no WebSockets, no raw JSON shown on screen.
-5. The final answer renders as a formatted card with bold text, tables,
+6. The final answer renders as a formatted card with bold text, tables,
    and a "N turns · N tool calls · N.Ns" footer; "Ask another question"
    resets the feed without re-uploading the file.
 
@@ -126,4 +159,5 @@ as the request finishes, and there's no database or auth; it's a local
 demo tool.
 
 Files involved: `src/app/**`, `src/components/**`, `src/hooks/use-agent.ts`,
-`lib/agent-core.js`, `tools.js`.
+`src/lib/canonical-preview.ts`, `lib/csv-adapt.js`, `lib/agent-core.js`,
+`tools.js`.
