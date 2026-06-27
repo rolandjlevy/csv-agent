@@ -6,6 +6,7 @@ import { useAgent } from "@/hooks/use-agent";
 import { Header } from "@/components/header";
 import { CsvDropzone } from "@/components/csv-dropzone";
 import { CsvPreview } from "@/components/csv-preview";
+import { ColumnConfirmPanel } from "@/components/column-confirm-panel";
 import { QuestionPanel } from "@/components/question-panel";
 import { AgentFeed } from "@/components/agent-feed";
 import { AnswerCard } from "@/components/answer-card";
@@ -26,6 +27,7 @@ export default function Home() {
   }, [agent.steps, agent.answer, agent.error]);
 
   const isUploadState = agent.status === "idle" || agent.status === "uploading";
+  const isConfirmState = agent.status === "confirming";
   const isAskState = agent.status === "ready";
   const isWorkingState =
     agent.status === "running" || agent.status === "done" || agent.status === "error";
@@ -45,6 +47,22 @@ export default function Home() {
               onFileAccepted={agent.uploadCsv}
               onSampleClick={agent.loadSample}
               isLoading={agent.status === "uploading"}
+            />
+          </motion.main>
+        )}
+
+        {isConfirmState && agent.profile && agent.rawPreview && (
+          <motion.main
+            key="confirm"
+            {...stateTransition}
+            className="mx-auto flex max-w-3xl flex-col gap-6 px-4 pb-16"
+          >
+            <ColumnConfirmPanel
+              fileName={agent.fileName}
+              profile={agent.profile}
+              rawPreview={agent.rawPreview}
+              onConfirm={agent.confirmProfile}
+              onCancel={agent.reset}
             />
           </motion.main>
         )}

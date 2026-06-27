@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parse } = require('csv-parse/sync');
+const { merchantKey } = require('./lib/merchant');
 
 const MONTH_NAMES = [
   'january', 'february', 'march', 'april', 'may', 'june',
@@ -51,10 +52,40 @@ function getField(row, key) {
   return match ? row[match] : undefined;
 }
 
+// Strip any currency symbol, thousands separators and stray mojibake (the
+// adapt stage normalises most files, but this keeps raw values robust too),
+// keeping only digits, a decimal point and a leading sign.
 function toNumber(value) {
   if (typeof value === 'number') return value;
   if (typeof value !== 'string') return NaN;
-  return parseFloat(value.replace(/[£,]/g, ''));
+  return parseFloat(value.replace(/[^0-9.\-]/g, ''));
+}
+
+function round2(num) {
+  return Math.round(num * 100) / 100;
+}
+
+// Parse a dd/mm/yyyy date into a sortable key. Returns null if unparseable.
+function parseDmy(value) {
+  const parts = String(value).split('/');
+  if (parts.length !== 3) return null;
+  const d = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  const y = parseInt(parts[2], 10);
+  if (!y || !m) return null;
+  return { y, m, d, key: y * 10000 + m * 100 + d };
+}
+
+// First/last date and inclusive month span across a set of dd/mm/yyyy dates.
+// The month span lets the agent turn a total into a monthly run-rate.
+function dateRange(dates) {
+  const parsed = dates.map(parseDmy).filter(Boolean).sort((a, b) => a.key - b.key);
+  if (parsed.length === 0) return { first: null, last: null, months: 1 };
+  const first = parsed[0];
+  const last = parsed[parsed.length - 1];
+  const months = (last.y - first.y) * 12 + (last.m - first.m) + 1;
+  const fmt = (p) => `${String(p.d).padStart(2, '0')}/${String(p.m).padStart(2, '0')}/${p.y}`;
+  return { first: fmt(first), last: fmt(last), months: Math.max(months, 1) };
 }
 
 // "month=June" has no real column on the row — derive it from Date
@@ -108,6 +139,48 @@ function analyse({ file_path, operation, column, group_by, filter }) {
       result: filtered.length,
       operation,
       description: `Count of rows${filter ? ` where ${filter}` : ''}`,
+    };
+  }
+
+  // Per-merchant breakdown: groups the filtered rows by a normalised merchant
+  // key (so a subscription's recurring charges aggregate even when each row's
+  // description embeds a different date) and reports, for each merchant, how
+  // many times it charged, the total, the average charge, the implied monthly
+  // run-rate, and the date range. This is what grounds "which subscription
+  // costs most / recurs most often / to cancel" answers in real figures.
+  if (operation === 'breakdown') {
+    const groups = {};
+    for (const row of filtered) {
+      const description = String(getField(row, 'description') ?? '');
+      const key = merchantKey(description) || description || 'Unknown';
+      const value = toNumber(getField(row, column));
+      const dateValue = String(getField(row, 'date') ?? '');
+
+      const group = groups[key] || (groups[key] = { merchant: key, count: 0, total: 0, dates: [] });
+      group.count += 1;
+      if (!Number.isNaN(value)) group.total += value;
+      if (dateValue) group.dates.push(dateValue);
+    }
+
+    const result = Object.values(groups)
+      .map((group) => {
+        const { first, last, months } = dateRange(group.dates);
+        return {
+          merchant: group.merchant,
+          count: group.count,
+          total: round2(group.total),
+          average: round2(group.total / group.count),
+          monthly_estimate: round2(group.total / months),
+          first_date: first,
+          last_date: last,
+        };
+      })
+      .sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
+
+    return {
+      result,
+      operation,
+      description: `Per-merchant breakdown of ${column}${filter ? ` where ${filter}` : ''} across ${result.length} merchants`,
     };
   }
 

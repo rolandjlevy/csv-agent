@@ -1,6 +1,10 @@
 require('dotenv').config();
 
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const { runAgentLoop } = require('./lib/agent-core');
+const { adaptCsv } = require('./lib/csv-adapt');
 
 const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
@@ -19,14 +23,35 @@ function stopSpinner(interval) {
   process.stdout.write('\r\x1b[K'); // clear the spinner line
 }
 
+// Convert whatever CSV the user pointed at into the canonical schema the
+// tools expect, returning a path to feed the agent loop. Already-canonical
+// files pass straight through with no LLM cost.
+async function prepareCsv(filePath) {
+  const raw = fs.readFileSync(path.resolve(filePath), 'utf8');
+  const result = await adaptCsv(raw, {
+    onEvent(event) {
+      console.log(`🧭 ${event.message}`);
+    },
+  });
+
+  if (result.skipped) return filePath;
+
+  const canonicalPath = path.join(os.tmpdir(), `csv-agent-canonical-${Date.now()}.csv`);
+  fs.writeFileSync(canonicalPath, result.csv, 'utf8');
+  return canonicalPath;
+}
+
 async function runAgent(filePath, question) {
   console.log('🚀 Agent starting...');
   console.log(`📂 File: ${filePath}`);
   console.log(`❓ Question: ${question}`);
 
+  console.log('\n🧰 Adapting CSV...');
+  const runPath = await prepareCsv(filePath);
+
   let spinner = null;
 
-  await runAgentLoop(filePath, question, {
+  await runAgentLoop(runPath, question, {
     onEvent(event) {
       if (event.type !== 'turn_start') {
         stopSpinner(spinner);

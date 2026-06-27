@@ -3,7 +3,14 @@
 import { useCallback, useRef, useState } from "react";
 import Papa from "papaparse";
 import type { AgentEvent } from "@lib/agent-core";
-import type { AgentStats, AgentStatus, CsvInfo } from "@/types/agent";
+import type { AdaptProfile, AgentStats, AgentStatus, CsvInfo } from "@/types/agent";
+import {
+  CANONICAL_COLUMNS,
+  canonicalPreview,
+  countTransactions,
+  parseFromHeader,
+  type RawPreview,
+} from "@/lib/canonical-preview";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB, per the upload-state spec
 
@@ -27,19 +34,81 @@ export function useAgent() {
   const [previewRows, setPreviewRows] = useState<CsvRow[]>([]);
   const [question, setQuestion] = useState<string | null>(null);
 
-  // Kept out of React state — it's only ever read inside askQuestion, and
-  // putting raw CSV text in state would re-render on every keystroke-sized
-  // change for no benefit.
+  // Adapt-stage state: the detected profile awaiting the user's confirmation,
+  // the file name, and a raw (array-mode) preview that drives the editable
+  // panel's live canonical preview.
+  const [profile, setProfile] = useState<AdaptProfile | null>(null);
+  const [rawPreview, setRawPreview] = useState<RawPreview | null>(null);
+  const [fileName, setFileName] = useState<string>("");
+
+  // Kept out of React state — only read inside askQuestion, and putting raw CSV
+  // text / the confirmed profile in render state would buy nothing here.
   const csvDataRef = useRef<string | null>(null);
+  const profileRef = useRef<AdaptProfile | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const applyCsv = useCallback((name: string, text: string) => {
+  // Already-canonical (or detection failed/skipped) — go straight to asking,
+  // showing the browser-parsed preview as-is.
+  const goReadyRaw = useCallback((name: string, text: string) => {
     const { columns, rows } = parseCsvText(text);
-    csvDataRef.current = text;
+    profileRef.current = null;
+    setProfile(null);
     setCsvInfo({ name, rows: rows.length, columns });
     setPreviewRows(rows.slice(0, 5));
     setStatus("ready");
   }, []);
+
+  const applyCsv = useCallback(
+    async (name: string, text: string) => {
+      csvDataRef.current = text;
+      setFileName(name);
+
+      try {
+        const response = await fetch("/api/detect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ csvData: text }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error ?? "Detection failed.");
+
+        // Canonical file (or nothing to map) — skip the confirmation panel.
+        if (data.skipped || !data.profile) {
+          goReadyRaw(name, text);
+          return;
+        }
+
+        // Needs adapting — show the editable confirmation panel.
+        const detected = data.profile as AdaptProfile;
+        setProfile(detected);
+        setRawPreview(parseFromHeader(text, detected.headerRowIndex));
+        setStatus("confirming");
+      } catch {
+        // Detection unavailable — proceed anyway; the agent route will
+        // auto-detect server-side at run time.
+        goReadyRaw(name, text);
+      }
+    },
+    [goReadyRaw]
+  );
+
+  // The user confirmed (and possibly edited) the column mapping. Lock it in,
+  // show the canonical preview in the sidebar, and move on to asking.
+  const confirmProfile = useCallback((confirmed: AdaptProfile) => {
+    const text = csvDataRef.current;
+    if (!text) return;
+
+    const raw = parseFromHeader(text, confirmed.headerRowIndex);
+    profileRef.current = confirmed;
+    setProfile(confirmed);
+    setCsvInfo({
+      name: fileName,
+      rows: countTransactions(confirmed, raw),
+      columns: [...CANONICAL_COLUMNS],
+    });
+    setPreviewRows(canonicalPreview(confirmed, raw, 5));
+    setStatus("ready");
+  }, [fileName]);
 
   const uploadCsv = useCallback(
     async (file: File) => {
@@ -50,7 +119,7 @@ export function useAgent() {
       setStatus("uploading");
       try {
         const text = await file.text();
-        applyCsv(file.name, text);
+        await applyCsv(file.name, text);
       } catch (err) {
         setStatus("idle");
         throw err instanceof Error ? err : new Error("Failed to parse CSV.");
@@ -65,7 +134,7 @@ export function useAgent() {
       const response = await fetch("/api/sample");
       if (!response.ok) throw new Error("Failed to load sample data.");
       const text = await response.text();
-      applyCsv("transactions.csv", text);
+      await applyCsv("transactions.csv", text);
     } catch (err) {
       setStatus("idle");
       throw err instanceof Error ? err : new Error("Failed to load sample data.");
@@ -95,7 +164,7 @@ export function useAgent() {
         const response = await fetch("/api/agent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ csvData, question: q }),
+          body: JSON.stringify({ csvData, question: q, profile: profileRef.current ?? undefined }),
           signal: controller.signal,
         });
 
@@ -159,6 +228,10 @@ export function useAgent() {
   const reset = useCallback(() => {
     abortRef.current?.abort();
     csvDataRef.current = null;
+    profileRef.current = null;
+    setProfile(null);
+    setRawPreview(null);
+    setFileName("");
     setCsvInfo(null);
     setPreviewRows([]);
     setSteps([]);
@@ -178,6 +251,10 @@ export function useAgent() {
     question,
     csvInfo,
     previewRows,
+    profile,
+    rawPreview,
+    fileName,
+    confirmProfile,
     uploadCsv,
     loadSample,
     askQuestion,

@@ -1,0 +1,60 @@
+{
+  "name": "csv-agent",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-24-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Web frontend (Next.js dev server) runs on 3000.
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js dev server",
+      "onAutoForward": "openPreview"
+    }
+  },
+
+  // Install dependencies once the container is created.
+  "postCreateCommand": "npm install",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "anthropic.claude-code",
+        "ms-vscode.vscode-typescript-next",
+        "GitHub.copilot",
+        "eamodio.gitlens"
+      ],
+      "settings": {
+        // Dark mode
+        "workbench.colorTheme": "Default Dark Modern",
+        "workbench.preferredDarkColorTheme": "Default Dark Modern",
+        "window.autoDetectColorScheme": false,
+
+        // Editor / formatting
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit"
+        },
+        "editor.tabSize": 2,
+        "files.eol": "\n",
+
+        // TypeScript
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "typescript.enablePromptUseWorkspaceTsdk": true,
+
+        // Tailwind v4 / CSS
+        "tailwindCSS.experimental.configFile": "tailwind.config.ts",
+        "files.associations": {
+          "*.css": "tailwindcss"
+        }
+      }
+    }
+  },
+
+  "remoteUser": "node"
+}
