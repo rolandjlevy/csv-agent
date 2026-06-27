@@ -55,4 +55,17 @@ export function parseAmount(value: unknown): number;
 export function normaliseDate(value: string, format: DateFormat): string;
 export function merchantKey(description: string): string;
 export function toCanonicalCsv(rows: CanonicalRow[]): string;
+
+export type PnlSection = 'income' | 'cost_of_sales' | 'overheads' | 'exclude';
+
+export interface Account {
+  code: string;
+  name: string;
+  pnl_section: PnlSection;
+  sa_box: string | null;
+}
+
+/** Full chart-of-accounts definition. */
+export const ACCOUNTS: Account[];
+/** Flat list of account names — the valid values for the Category column. */
 export const CATEGORIES: string[];
