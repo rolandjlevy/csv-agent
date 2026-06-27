@@ -41,7 +41,7 @@ async function main() {
   for (const c of CASES) {
     const got = results[c.merchant] ?? '(missing)';
     const ok = got === c.expect;
-    ok ? passed++ : failures.push({ ...c, got });
+    if (ok) { passed++; } else { failures.push({ ...c, got }); }
 
     // Critical: an exclude-expected transaction that landed on the P&L
     if (!ok && EXCLUDE_NAMES.has(c.expect) && !EXCLUDE_NAMES.has(got)) {
