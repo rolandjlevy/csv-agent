@@ -1,22 +1,25 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 
 const PREDEFINED_QUESTIONS = [
-  { emoji: "💰", text: "What did I spend most on?" },
-  { emoji: "📅", text: "Show me a monthly breakdown" },
-  { emoji: "📊", text: "What's my average daily spend?" },
-  { emoji: "🔍", text: "Any unusual transactions?" },
-  { emoji: "📺", text: "How much went to subscriptions?" },
-  { emoji: "🤔", text: "Which of these subscriptions would I miss the least?" },
+  { emoji: '💰', text: 'What did I spend most on?' },
+  { emoji: '📅', text: 'Show me my spending broken down by month' },
+  { emoji: '⚖️', text: 'Is my most recent month above or below my average?' },
+  { emoji: '📊', text: "What's my average daily spend?" },
+  { emoji: '💼', text: "Am I spending more than I'm earning?" },
+  { emoji: '🔍', text: 'Any unusual transactions?' },
+  { emoji: '📺', text: 'How much went to subscriptions?' },
   {
-    emoji: "✂️",
-    text: "Canceling which subscriptions save the most while having the smallest impact?",
+    emoji: '✂️',
+    text: 'Canceling which subscriptions would save the most while having the smallest impact?',
   },
-  { emoji: "💸", text: "Which subscriptions provide the lowest value per pound?" },
-  { emoji: "🎯", text: "Help me build a plan to reduce my spending by £25 per month." },
-  { emoji: "📝", text: "Write me a spending report" },
+  {
+    emoji: '🎯',
+    text: 'Help me build a plan to reduce my spending by £25 per month.',
+  },
+  { emoji: '📝', text: 'Write me a spending report' },
 ];
 
 interface QuestionPanelProps {
@@ -24,7 +27,7 @@ interface QuestionPanelProps {
 }
 
 export function QuestionPanel({ onSubmit }: QuestionPanelProps) {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
 
   const submit = (text: string) => {
     const trimmed = text.trim();
@@ -34,7 +37,9 @@ export function QuestionPanel({ onSubmit }: QuestionPanelProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <h2 className="text-lg font-semibold text-text">What do you want to know?</h2>
+      <h2 className="text-lg font-semibold text-text">
+        What do you want to know?
+      </h2>
 
       <div className="flex flex-wrap gap-2">
         {PREDEFINED_QUESTIONS.map((q, i) => (
@@ -65,7 +70,7 @@ export function QuestionPanel({ onSubmit }: QuestionPanelProps) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Escape") setValue("");
+            if (e.key === 'Escape') setValue('');
           }}
           placeholder="Ask anything about your data..."
           className="flex-1 rounded-lg border border-border bg-bg-surface px-4 py-3 text-sm text-text placeholder:text-text-faint focus:border-accent focus:outline-none"

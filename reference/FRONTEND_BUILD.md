@@ -143,7 +143,7 @@ STATE 1 — UPLOAD (initial state)
 The full viewport. Clean, minimal, inviting.
 
 - Header: "CSV Agent" with a subtle logo/icon
-  Tagline underneath: "Drop a CSV. Ask anything."
+  Tagline underneath: "Drop a bank CSV. Ask anything."
 - Large drag-and-drop zone (centre of viewport):
   - Dashed border, subtle pulse animation on hover
   - Icon: document/spreadsheet icon
