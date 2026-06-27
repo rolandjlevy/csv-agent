@@ -1,4 +1,4 @@
-import { Term } from "@/components/term";
+import { Term } from '@/components/term';
 
 export function Header() {
   return (
@@ -21,26 +21,26 @@ export function Header() {
         </h1>
       </div>
       <p className="mt-1 text-base font-medium text-text sm:text-lg">
-        Drop a CSV. Ask anything.
+        Drop a bank CSV. Ask anything.
       </p>
 
       <p className="mt-3 max-w-xl text-xs leading-relaxed text-text-muted sm:text-sm">
-        An{" "}
+        An{' '}
         <Term detail="An LLM that decides which action to take next in a loop, rather than running a fixed script.">
           AI agent
-        </Term>{" "}
-        that reads{" "}
+        </Term>{' '}
+        that reads{' '}
         <Term detail="Santander, Monzo, whatever — it auto-detects the columns and normalises them before answering.">
           any bank&rsquo;s CSV
-        </Term>{" "}
-        and answers your questions in{" "}
+        </Term>{' '}
+        and answers your questions in{' '}
         <Term detail="No formulas or pivot tables. Just ask: “What did I spend most on in June?”">
           plain English
-        </Term>{" "}
-        — choosing{" "}
+        </Term>{' '}
+        — choosing{' '}
         <Term detail="read_csv, analyse, write_report — Claude picks the order at runtime based on your question.">
           its own tools
-        </Term>{" "}
+        </Term>{' '}
         as it goes.
       </p>
     </header>

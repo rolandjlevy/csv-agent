@@ -149,7 +149,7 @@ npm run build && npm start   # production build
 
 How it works:
 
-1. You drop a CSV (or click "try with sample data" to load
+1. You drop a bank CSV (or click "try with sample data" to load
    `data/transactions.csv`) — it's parsed in the browser with Papaparse
    for the preview table; the raw text is kept in memory.
 2. The browser POSTs the raw CSV to `/api/detect`, which returns either
