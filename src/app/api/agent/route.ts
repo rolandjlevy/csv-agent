@@ -3,12 +3,14 @@ import { unlink, writeFile } from "fs/promises";
 import os from "os";
 import path from "path";
 import { runAgentLoop, type AgentEvent } from "@lib/agent-core";
+import { adaptCsv, transformAndCategorise, type AdaptProfile } from "@lib/csv-adapt";
 
 export const runtime = "nodejs";
 
 interface AgentRequestBody {
   csvData?: unknown;
   question?: unknown;
+  profile?: AdaptProfile;
 }
 
 function ndjsonText(event: AgentEvent): string {
@@ -33,7 +35,7 @@ export async function POST(req: Request): Promise<Response> {
     return singleEventResponse({ type: "error", message: "Invalid JSON body." });
   }
 
-  const { csvData, question } = body;
+  const { csvData, question, profile } = body;
 
   if (typeof csvData !== "string" || !csvData.trim()) {
     return singleEventResponse({ type: "error", message: "Missing or invalid csvData." });
@@ -53,7 +55,18 @@ export async function POST(req: Request): Promise<Response> {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        await writeFile(tempPath, csvData, "utf8");
+        // Adapt any bank's CSV into the canonical schema first, surfacing each
+        // step in the existing feed as a "thinking" event (turn 0). When the
+        // browser sends a user-confirmed profile, apply it directly and skip
+        // re-detection; otherwise fall back to full auto-detection.
+        const onAdaptEvent = (event: { message: string }) => {
+          controller.enqueue(ndjsonLine({ type: "thinking", turn: 0, text: event.message }));
+        };
+        const adapted = profile
+          ? await transformAndCategorise(csvData, profile, { onEvent: onAdaptEvent })
+          : await adaptCsv(csvData, { onEvent: onAdaptEvent });
+
+        await writeFile(tempPath, adapted.csv, "utf8");
 
         await runAgentLoop(tempPath, question, {
           onEvent(event) {

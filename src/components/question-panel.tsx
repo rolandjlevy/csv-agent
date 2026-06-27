@@ -9,6 +9,13 @@ const PREDEFINED_QUESTIONS = [
   { emoji: "📊", text: "What's my average daily spend?" },
   { emoji: "🔍", text: "Any unusual transactions?" },
   { emoji: "📺", text: "How much went to subscriptions?" },
+  { emoji: "🤔", text: "Which of these subscriptions would I miss the least?" },
+  {
+    emoji: "✂️",
+    text: "If I canceled three subscriptions today, which would save the most money while creating the smallest impact?",
+  },
+  { emoji: "💸", text: "Which subscriptions provide the lowest value per dollar?" },
+  { emoji: "🎯", text: "Help me build a plan to reduce my spending by £25 per month." },
   { emoji: "📝", text: "Write me a spending report" },
 ];
 
