@@ -17,24 +17,33 @@ calls at runtime based on the question. That loop *is* the whole concept.
 
 ## Architecture (read in this order)
 
-0. `lib/csv-adapt.js` — **ingestion / adapt stage**, run *before* the loop. Turns
+0. `lib/accounts.js` — **chart-of-accounts definition** (no imports, no side
+   effects). 26 entries across four `pnl_section` values: `income`,
+   `cost_of_sales`, `overheads`, and `exclude`. The `exclude` bucket is the
+   critical one — transfers, drawings, VAT, tax, loan principal, and capital
+   expenditure must never reach the P&L. Imported by both `csv-adapt.js` and
+   `tools.js`; kept standalone to avoid a circular dependency.
+1. `lib/csv-adapt.js` — **ingestion / adapt stage**, run *before* the loop. Turns
    any bank's CSV export (e.g. Santander, with preamble rows, split Money
    In/Out columns, `£` mojibake, no Category) into the canonical
    `Date,Description,Amount,Category,Bank` schema the tools expect. The LLM
    *decides* the mapping (`detectProfile` → an ingestion profile) and
-   *classifies* unique merchants into categories; plain JS does every row
-   transformation — **no model-side maths**, same as the tools. Files already
-   in canonical form (`looksCanonical`) pass straight through with no LLM cost.
-1. `lib/agent-core.js` — **the only place the loop lives.** It sends the
+   *classifies* unique merchants into COA categories (`classifyMerchants`);
+   plain JS does every row transformation — **no model-side maths**, same as
+   the tools. Files already in canonical form (`looksCanonical`) pass straight
+   through with no LLM cost.
+2. `lib/agent-core.js` — **the only place the loop lives.** It sends the
    question + tool definitions to Claude, executes whichever tool Claude
    requests, feeds the result back, and repeats until Claude answers or a
    10-turn safety limit is hit. Emits events (`turn_start`, `thinking`,
    `tool_call`, `tool_result`, `answer`, `done`/`error`).
-2. `tools.js` — the three tools as plain functions, **no LLM calls inside
-   them**: `read_csv`, `analyse` (just JavaScript math), `write_report`.
-3. `agent.js` — CLI entry point; calls `agent-core.js` and prints events to
+3. `tools.js` — the four tools as plain functions, **no LLM calls inside
+   them**: `read_csv`, `analyse` (JavaScript math), `generate_pl` (P&L from
+   categorised rows — groups by COA section, surfaces exceptions and excluded
+   items), `write_report`.
+4. `agent.js` — CLI entry point; calls `agent-core.js` and prints events to
    the terminal.
-4. `src/app/api/agent/route.ts` — calls the same `agent-core.js` and streams
+5. `src/app/api/agent/route.ts` — calls the same `agent-core.js` and streams
    the events to the browser as NDJSON (one JSON object per line).
 
 Both entry points are thin wrappers. **Do not reimplement the loop** in either

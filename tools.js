@@ -6,6 +6,10 @@ const fs = require('fs');
 const path = require('path');
 const { parse } = require('csv-parse/sync');
 const { merchantKey } = require('./lib/merchant');
+const { ACCOUNTS } = require('./lib/accounts');
+
+// Build a category-name → pnl_section lookup once at module load.
+const SECTION_BY_NAME = new Map(ACCOUNTS.map((a) => [a.name, a.pnl_section]));
 
 const MONTH_NAMES = [
   'january', 'february', 'march', 'april', 'may', 'june',
@@ -217,6 +221,115 @@ function analyse({ file_path, operation, column, group_by, filter }) {
   };
 }
 
+// Maximum rows surfaced in the exceptions and excluded lists — enough to be
+// actionable without bloating the tool result sent back to Claude.
+const MAX_EXCEPTIONS = 25;
+
+// Generates a P&L from a canonical (adapted) CSV. Groups rows by P&L section
+// using the chart-of-accounts, computes Revenue / Gross Profit / Net Profit,
+// and separately lists Uncategorised rows (exceptions — need human review) and
+// exclude-bucket rows (transfers, VAT, drawings etc. that must not hit the P&L).
+// An optional filter ("month=May", "category=...") narrows the rows first.
+function generatePl({ file_path, filter }) {
+  const allRows = parseCsvFile(file_path);
+  const rows = applyFilter(allRows, filter || null);
+
+  const income = [];
+  const cogs = [];
+  const overheads = [];
+  const excluded = [];
+  const exceptions = [];
+  let totalExceptions = 0;
+
+  for (const row of rows) {
+    const category = String(getField(row, 'category') || '').trim();
+    const rawAmount = getField(row, 'amount');
+    const amount = toNumber(rawAmount);
+    const safeAmount = Number.isNaN(amount) ? 0 : amount;
+
+    if (category === 'Uncategorised' || category === '') {
+      totalExceptions++;
+      if (exceptions.length < MAX_EXCEPTIONS) {
+        exceptions.push({
+          date: getField(row, 'date') || '',
+          description: getField(row, 'description') || '',
+          amount: Number.isNaN(amount) ? null : amount,
+        });
+      }
+      continue;
+    }
+
+    const section = SECTION_BY_NAME.get(category) ?? 'exclude';
+    const entry = { category, amount: safeAmount };
+
+    switch (section) {
+      case 'income':        income.push(entry);    break;
+      case 'cost_of_sales': cogs.push(entry);      break;
+      case 'overheads':     overheads.push(entry); break;
+      default:              excluded.push(entry);  break;
+    }
+  }
+
+  // Aggregate into named lines, sorted largest-magnitude first.
+  function groupLines(items) {
+    const map = {};
+    for (const { category, amount } of items) {
+      if (!map[category]) map[category] = { name: category, total: 0, count: 0 };
+      map[category].total += amount;
+      map[category].count += 1;
+    }
+    return Object.values(map)
+      .map((l) => ({ ...l, total: round2(l.total) }))
+      .sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
+  }
+
+  const revenueLines  = groupLines(income);
+  const cogsLines     = groupLines(cogs);
+  const overheadLines = groupLines(overheads);
+
+  // Amounts already carry the correct sign from the canonical CSV (income is
+  // positive, expenses are negative), so simple addition gives the right totals.
+  const totalRevenue   = round2(revenueLines.reduce((s, l)  => s + l.total, 0));
+  const totalCogs      = round2(cogsLines.reduce((s, l)     => s + l.total, 0));
+  const grossProfit    = round2(totalRevenue + totalCogs);
+  const totalOverheads = round2(overheadLines.reduce((s, l) => s + l.total, 0));
+  const netProfit      = round2(grossProfit + totalOverheads);
+
+  const pct = (n) => (totalRevenue !== 0 ? round2((n / totalRevenue) * 100) : null);
+
+  // Period covered
+  const dates = rows.map((r) => String(getField(r, 'date') || '')).filter(Boolean);
+  const period = dateRange(dates);
+
+  // Excluded summary (transfers, VAT, drawings, etc.)
+  const excludedLines = groupLines(excluded);
+
+  return {
+    period,
+    revenue:    { total: totalRevenue,   lines: revenueLines  },
+    cost_of_sales: { total: totalCogs,   lines: cogsLines     },
+    gross_profit: grossProfit,
+    gross_profit_margin_pct: pct(grossProfit),
+    overheads:  { total: totalOverheads, lines: overheadLines },
+    net_profit:  netProfit,
+    net_profit_margin_pct: pct(netProfit),
+    exceptions: {
+      total_count: totalExceptions,
+      shown: exceptions,
+      note: totalExceptions > MAX_EXCEPTIONS
+        ? `Showing first ${MAX_EXCEPTIONS} of ${totalExceptions} uncategorised rows. These are excluded from the P&L figures above and must be reviewed.`
+        : totalExceptions > 0
+          ? 'These rows are excluded from P&L figures and must be reviewed.'
+          : null,
+    },
+    excluded: {
+      count: excluded.length,
+      note: 'Balance-sheet movements (transfers, drawings, VAT, tax, loan principal, capex) — correctly excluded from the P&L.',
+      breakdown: excludedLines,
+    },
+  };
+}
+
 function writeReport({ content, file_path }) {
   // Ignore any directory the model put in file_path — only keep the file
   // name and always write inside REPORTS_DIR.
@@ -232,4 +345,4 @@ function writeReport({ content, file_path }) {
   };
 }
 
-module.exports = { readCsv, analyse, writeReport };
+module.exports = { readCsv, analyse, writeReport, generatePl };

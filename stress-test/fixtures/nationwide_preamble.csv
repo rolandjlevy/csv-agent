@@ -1,0 +1,7 @@
+Account Name:,FlexAccount
+Account Number:,12345678
+
+Date,Transaction type,Description,Paid out,Paid in,Balance
+01/05/2026,Transfer,SALARY ACME LTD,,£3200.00,£5400.00
+02/05/2026,Card payment,TESCO STORES 2981,£54.32,,£5345.68
+03/05/2026,Direct debit,BRITISH GAS,£89.50,,£5256.18

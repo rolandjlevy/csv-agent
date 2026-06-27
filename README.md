@@ -13,8 +13,8 @@ it just wraps the CLI's core in a streaming HTTP endpoint.
 
 This isn't a framework demo — it's the whole mechanism, in plain code.
 
-1. You send Claude the question, plus three tool definitions (`read_csv`,
-   `analyse`, `write_report`).
+1. You send Claude the question, plus four tool definitions (`read_csv`,
+   `analyse`, `generate_pl`, `write_report`).
 2. Claude responds with either a tool call or a final answer.
 3. If it's a tool call, the loop executes the corresponding function in
    `tools.js` locally and sends the result back as a new message.
@@ -39,21 +39,30 @@ whatever you give it into that canonical shape.
 The split of responsibility mirrors the tools: **the LLM decides, plain
 JavaScript does the work.** Two small one-off LLM calls happen at
 ingestion — `detectProfile()` works out the column mapping and date
-format, and `classifyMerchants()` sorts each unique merchant into one of a
-fixed set of categories. Every row is then transformed deterministically
+format, and `classifyMerchants()` sorts each unique merchant into a
+chart-of-accounts category. Every row is then transformed deterministically
 in plain JS — no model-side maths, the same property the `analyse` tool
 relies on. Files that are already canonical (`looksCanonical()`) skip the
 LLM entirely and pass straight through at no cost.
 
+The categories come from a proper chart-of-accounts (`lib/accounts.js`):
+income, cost of sales, overheads, and an explicit **exclude** bucket for
+balance-sheet movements (transfers, drawings, VAT, tax, loan principal,
+capital expenditure) that must never appear on a P&L. The `generate_pl`
+tool groups categorised rows into this structure and surfaces any
+unclassified transactions as exceptions requiring human review.
+
 ## Project structure
 
 ```
+lib/accounts.js        ← chart-of-accounts definition (income / cost of sales /
+                          overheads / exclude) — imported by both csv-adapt and tools
 lib/csv-adapt.js       ← ingestion stage: normalises any bank's CSV into the canonical
                           schema before the loop (LLM decides the mapping, JS transforms)
 lib/merchant.js        ← merchant-name normalisation shared by the classifier
 lib/agent-core.js      ← the loop itself (read this first) — shared by both versions
-tools.js               ← the three tools, implemented as plain functions (no LLM
-                          calls inside them — analyse is just JavaScript math)
+tools.js               ← four tools, implemented as plain functions (no LLM calls
+                          inside them): read_csv, analyse, generate_pl, write_report
 data/transactions.csv  ← sample UK bank transactions to query against
 
 agent.js               ← CLI entry point, wraps lib/agent-core.js with console output
@@ -87,6 +96,12 @@ cp .env.example .env
 
 This one `ANTHROPIC_API_KEY` is used by both versions.
 
+```bash
+npm i @anthropic-ai/claude-code -g
+# follow authentication steps, then...
+claude
+```
+
 ---
 
 ## CLI version
@@ -96,6 +111,7 @@ against a CSV file.
 
 ```bash
 node agent.js data/transactions.csv "What did I spend most on?"
+node agent.js data/transactions.csv "Give me a P&L for this data"
 node agent.js data/transactions.csv "How much did I spend on dining out in June?"
 node agent.js data/transactions.csv "What's my average daily spend?"
 node agent.js data/transactions.csv "Are there any uncategorised transactions?"
