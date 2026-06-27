@@ -65,7 +65,6 @@ async function main() {
     process.exit(1);
   }
 
-  const accountNames = new Set(ACCOUNTS.map((a) => a.name));
   const excludeNames = new Set(
     ACCOUNTS.filter((a) => a.pnl_section === 'exclude').map((a) => a.name)
   );
