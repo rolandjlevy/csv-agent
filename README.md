@@ -1,4 +1,4 @@
-# 📊 CSV Agent
+# 📄 CSV Agent
 
 A minimal, real AI agent. It takes a CSV file and a question, then
 decides for itself which tools to call — and in what order — to find
