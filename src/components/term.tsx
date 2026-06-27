@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface TermProps {
@@ -15,13 +15,33 @@ interface TermProps {
 // while still letting curious visitors dig into each concept.
 export function Term({ children, detail }: TermProps) {
   const [open, setOpen] = useState(false);
+  const [nudge, setNudge] = useState(0);
+  const tooltipRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open || !tooltipRef.current) return;
+    const rect = tooltipRef.current.getBoundingClientRect();
+    const padding = 8;
+    if (rect.left < padding) {
+      setNudge(padding - rect.left);
+    } else if (rect.right > window.innerWidth - padding) {
+      setNudge(window.innerWidth - padding - rect.right);
+    } else {
+      setNudge(0);
+    }
+  }, [open]);
+
+  const handleOpen = () => {
+    setNudge(0);
+    setOpen(true);
+  };
 
   return (
     <span
       className="relative inline-block"
-      onMouseEnter={() => setOpen(true)}
+      onMouseEnter={handleOpen}
       onMouseLeave={() => setOpen(false)}
-      onFocus={() => setOpen(true)}
+      onFocus={handleOpen}
       onBlur={() => setOpen(false)}
     >
       <span
@@ -34,11 +54,13 @@ export function Term({ children, detail }: TermProps) {
       <AnimatePresence>
         {open && (
           <motion.span
+            ref={tooltipRef}
             role="tooltip"
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
+            style={{ marginLeft: nudge }}
             className="absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-lg border border-border bg-bg-elevated px-3 py-2 text-left text-xs font-normal leading-relaxed text-text-muted shadow-lg"
           >
             {detail}

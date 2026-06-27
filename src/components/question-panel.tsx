@@ -13,7 +13,7 @@ const PREDEFINED_QUESTIONS = [
   { emoji: '📺', text: 'How much went to subscriptions?' },
   {
     emoji: '✂️',
-    text: 'Canceling which subscriptions would save the most while having the smallest impact?',
+    text: 'Canceling which subscriptions save the most with the least impact?',
   },
   {
     emoji: '🎯',
