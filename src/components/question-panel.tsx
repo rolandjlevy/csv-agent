@@ -14,7 +14,7 @@ const PREDEFINED_QUESTIONS = [
     emoji: "✂️",
     text: "Canceling which subscriptions save the most while having the smallest impact?",
   },
-  { emoji: "💸", text: "Which subscriptions provide the lowest value per dollar?" },
+  { emoji: "💸", text: "Which subscriptions provide the lowest value per pound?" },
   { emoji: "🎯", text: "Help me build a plan to reduce my spending by £25 per month." },
   { emoji: "📝", text: "Write me a spending report" },
 ];
