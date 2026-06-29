@@ -136,7 +136,7 @@ Files involved: `agent.js`, `lib/csv-adapt.js`, `lib/agent-core.js`, `tools.js`.
 
 A dark-mode web UI (Next.js 15 + Tailwind + Framer Motion) that lets you
 drag a CSV into the browser, pick a question, and watch the agent's
-tool calls stream in live instead of reading terminal output.
+tool calls stream in live instead of reading terminal output. [Try the demo](https://csv-agent-vert.vercel.app) 🚀
 
 ```bash
 npm run dev
