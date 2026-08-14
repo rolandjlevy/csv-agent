@@ -5,7 +5,8 @@ const os = require('os');
 const path = require('path');
 const readline = require('readline');
 const { runAgentLoop } = require('./lib/agent-core');
-const { adaptCsv } = require('./lib/csv-adapt');
+const { adaptCsv, transformAndCategorise } = require('./lib/csv-adapt');
+const profileStore = require('./lib/profile-store');
 
 const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
@@ -28,13 +29,44 @@ function stopSpinner(interval) {
 // tools expect, returning a path to feed the agent loop plus the detected
 // currency (so the agent formats figures correctly instead of assuming
 // GBP). Already-canonical files pass straight through with no LLM cost.
-async function prepareCsv(filePath) {
+//
+// --profile <name> skips detectProfile() entirely and reuses a previously
+// saved column mapping (~/.csv-agent/profiles/<name>.json). --save-profile
+// <name> persists whichever profile actually got used — freshly detected, or
+// (if both flags are given together) the reused one, saved again under the
+// new name rather than silently ignored.
+async function prepareCsv(filePath, { profileName, saveProfileName } = {}) {
   const raw = fs.readFileSync(path.resolve(filePath), 'utf8');
-  const result = await adaptCsv(raw, {
-    onEvent(event) {
-      console.log(`🧭 ${event.message}`);
-    },
-  });
+  const onEvent = (event) => console.log(`🧭 ${event.message}`);
+
+  let result;
+  if (profileName) {
+    let profile;
+    try {
+      profile = profileStore.loadProfile(profileName);
+    } catch {
+      console.error(
+        `❌ No saved profile named "${profileName}" found in ${profileStore.profilesDir()}`
+      );
+      process.exit(1);
+    }
+    console.log(`📎 Using saved profile "${profileName}" (${profile.bankName || 'Unknown'}) — skipping detection.`);
+    result = await transformAndCategorise(raw, profile, { onEvent });
+    if (saveProfileName) {
+      profileStore.saveProfile(saveProfileName, profile);
+      console.log(`💾 Also saved as "${saveProfileName}" (${profileStore.profilePath(saveProfileName)})`);
+    }
+  } else {
+    result = await adaptCsv(raw, { onEvent });
+    if (saveProfileName) {
+      if (result.profile) {
+        profileStore.saveProfile(saveProfileName, result.profile);
+        console.log(`💾 Saved profile as "${saveProfileName}" (${profileStore.profilePath(saveProfileName)})`);
+      } else {
+        console.log(`ℹ️ File is already canonical — nothing detected to save as "${saveProfileName}".`);
+      }
+    }
+  }
 
   if (result.skipped) return { runPath: filePath, currency: undefined };
 
@@ -51,13 +83,13 @@ function askFollowUp(rl) {
   });
 }
 
-async function runAgent(filePath, question) {
+async function runAgent(filePath, question, { profileName, saveProfileName } = {}) {
   console.log('🚀 Agent starting...');
   console.log(`📂 File: ${filePath}`);
   console.log(`❓ Question: ${question}`);
 
   console.log('\n🧰 Adapting CSV...');
-  const { runPath, currency } = await prepareCsv(filePath);
+  const { runPath, currency } = await prepareCsv(filePath, { profileName, saveProfileName });
 
   let spinner = null;
   let history = [];
@@ -119,11 +151,29 @@ async function runAgent(filePath, question) {
   }
 }
 
+// Pulls --profile/--save-profile flags out of argv, leaving the two
+// positional args (file, question) in the order they were given.
+function parseArgs(argv) {
+  const positional = [];
+  let profileName;
+  let saveProfileName;
+
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--profile') profileName = argv[++i];
+    else if (argv[i] === '--save-profile') saveProfileName = argv[++i];
+    else positional.push(argv[i]);
+  }
+
+  return { filePath: positional[0], question: positional[1], profileName, saveProfileName };
+}
+
 function main() {
-  const [, , filePath, question] = process.argv;
+  const { filePath, question, profileName, saveProfileName } = parseArgs(process.argv.slice(2));
 
   if (!filePath || !question) {
-    console.error('Usage: node agent.js <csv-file> "<question>"');
+    console.error(
+      'Usage: node agent.js <csv-file> "<question>" [--profile <name>] [--save-profile <name>]'
+    );
     process.exit(1);
   }
 
@@ -132,7 +182,7 @@ function main() {
     process.exit(1);
   }
 
-  runAgent(filePath, question).catch((error) => {
+  runAgent(filePath, question, { profileName, saveProfileName }).catch((error) => {
     console.error('Agent crashed:', error);
     process.exit(1);
   });

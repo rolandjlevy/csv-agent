@@ -9,12 +9,14 @@ import {
   type RawPreview,
 } from "@/lib/canonical-preview";
 import { CsvPreview } from "@/components/csv-preview";
+import { listSavedProfiles, type SavedProfile } from "@/lib/saved-profiles";
 
 interface ColumnConfirmPanelProps {
   fileName: string;
   profile: AdaptProfile;
   rawPreview: RawPreview;
-  onConfirm: (profile: AdaptProfile) => void;
+  savedProfileMatch?: SavedProfile | null;
+  onConfirm: (profile: AdaptProfile, saveAs?: string) => void;
   onCancel: () => void;
 }
 
@@ -43,10 +45,36 @@ export function ColumnConfirmPanel({
   fileName,
   profile,
   rawPreview,
+  savedProfileMatch,
   onConfirm,
   onCancel,
 }: ColumnConfirmPanelProps) {
-  const [edited, setEdited] = useState<AdaptProfile>(profile);
+  // All saved profiles (any bank), read once — lets the user pick a
+  // different one than whatever we auto-matched, or apply one to a file we
+  // didn't recognise at all.
+  const savedProfiles = useMemo(() => listSavedProfiles(), []);
+
+  const [edited, setEdited] = useState<AdaptProfile>(savedProfileMatch?.profile ?? profile);
+  const [selectedSavedName, setSelectedSavedName] = useState(savedProfileMatch?.name ?? "");
+  const [rememberFormat, setRememberFormat] = useState(true);
+  const [saveName, setSaveName] = useState(
+    savedProfileMatch?.name || profile.bankName || ""
+  );
+
+  const selectedSaved = savedProfiles.find((p) => p.name === selectedSavedName) ?? null;
+
+  const applySavedSelection = (name: string) => {
+    setSelectedSavedName(name);
+    if (!name) {
+      setEdited(profile); // "Auto-detected mapping" — revert to the fresh detection
+      return;
+    }
+    const found = savedProfiles.find((p) => p.name === name);
+    if (found) {
+      setEdited(found.profile);
+      setSaveName(found.name);
+    }
+  };
 
   // Real, non-empty header names from the source file — what the user picks
   // from when remapping a column.
@@ -99,7 +127,31 @@ export function ColumnConfirmPanel({
         <p className="mt-1 text-xs text-text-faint">
           Header detected on row {edited.headerRowIndex + 1} of the file.
         </p>
+        {selectedSaved && (
+          <p className="mt-2 rounded-md bg-accent-muted px-3 py-2 text-xs text-accent">
+            📎 Using your saved &quot;{selectedSaved.name}&quot; profile — review and continue, or
+            edit anything that&apos;s changed.
+          </p>
+        )}
       </div>
+
+      {savedProfiles.length > 0 && (
+        <Field label="Use a saved profile">
+          <select
+            className={selectClass}
+            value={selectedSavedName}
+            onChange={(e) => applySavedSelection(e.target.value)}
+          >
+            <option value="">— Auto-detected mapping —</option>
+            {savedProfiles.map((p) => (
+              <option key={p.name} value={p.name}>
+                {p.name}
+                {p.profile.bankName ? ` (${p.profile.bankName})` : ""}
+              </option>
+            ))}
+          </select>
+        </Field>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Date column">
@@ -182,6 +234,24 @@ export function ColumnConfirmPanel({
         <CsvPreview columns={[...CANONICAL_COLUMNS]} rows={preview} />
       </div>
 
+      <label className="flex items-center gap-2 text-sm text-text-muted">
+        <input
+          type="checkbox"
+          checked={rememberFormat}
+          onChange={(e) => setRememberFormat(e.target.checked)}
+          className="h-4 w-4 accent-accent"
+        />
+        Remember this format as
+        <input
+          type="text"
+          value={saveName}
+          onChange={(e) => setSaveName(e.target.value)}
+          disabled={!rememberFormat}
+          placeholder="e.g. Barclays Business"
+          className="flex-1 rounded-lg border border-border bg-bg-surface px-3 py-1.5 text-sm text-text focus:border-accent focus:outline-none disabled:opacity-50"
+        />
+      </label>
+
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
@@ -192,7 +262,7 @@ export function ColumnConfirmPanel({
         </button>
         <button
           type="button"
-          onClick={() => onConfirm(edited)}
+          onClick={() => onConfirm(edited, rememberFormat ? saveName : undefined)}
           className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg transition-opacity hover:opacity-90"
         >
           Looks good — continue →

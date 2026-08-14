@@ -61,6 +61,7 @@ export default function Home() {
               fileName={agent.fileName}
               profile={agent.profile}
               rawPreview={agent.rawPreview}
+              savedProfileMatch={agent.savedProfileMatch}
               onConfirm={agent.confirmProfile}
               onCancel={agent.reset}
             />
