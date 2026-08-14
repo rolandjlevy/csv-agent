@@ -132,18 +132,21 @@ export function useAgent() {
     [applyCsv]
   );
 
-  const loadSample = useCallback(async () => {
-    setStatus("uploading");
-    try {
-      const response = await fetch("/api/sample");
-      if (!response.ok) throw new Error("Failed to load sample data.");
-      const text = await response.text();
-      await applyCsv("transactions.csv", text);
-    } catch (err) {
-      setStatus("idle");
-      throw err instanceof Error ? err : new Error("Failed to load sample data.");
-    }
-  }, [applyCsv]);
+  const loadSample = useCallback(
+    async (kind: "clean" | "messy" = "messy") => {
+      setStatus("uploading");
+      try {
+        const response = await fetch(`/api/sample?kind=${kind}`);
+        if (!response.ok) throw new Error("Failed to load sample data.");
+        const text = await response.text();
+        await applyCsv(kind === "clean" ? "transactions.csv" : "sample-messy.csv", text);
+      } catch (err) {
+        setStatus("idle");
+        throw err instanceof Error ? err : new Error("Failed to load sample data.");
+      }
+    },
+    [applyCsv]
+  );
 
   const askQuestion = useCallback((q: string) => {
     const csvData = csvDataRef.current;

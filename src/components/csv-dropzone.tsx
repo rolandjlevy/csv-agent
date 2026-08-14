@@ -8,7 +8,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 interface CsvDropzoneProps {
   onFileAccepted: (file: File) => Promise<void>;
-  onSampleClick: () => Promise<void>;
+  onSampleClick: (kind: "clean" | "messy") => Promise<void>;
   isLoading: boolean;
 }
 
@@ -47,14 +47,17 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
     },
   });
 
-  const handleSampleClick = useCallback(async () => {
-    setLocalError(null);
-    try {
-      await onSampleClick();
-    } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "Failed to load sample data.");
-    }
-  }, [onSampleClick]);
+  const handleSampleClick = useCallback(
+    async (kind: "clean" | "messy") => {
+      setLocalError(null);
+      try {
+        await onSampleClick(kind);
+      } catch (err) {
+        setLocalError(err instanceof Error ? err.message : "Failed to load sample data.");
+      }
+    },
+    [onSampleClick]
+  );
 
   return (
     <div className="flex w-full max-w-xl flex-col items-center gap-4 px-4">
@@ -97,14 +100,24 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
 
       {localError && <p className="text-sm text-error">{localError}</p>}
 
-      <button
-        type="button"
-        onClick={handleSampleClick}
-        disabled={isLoading}
-        className="text-sm text-text-muted underline-offset-4 hover:text-accent hover:underline disabled:opacity-50"
-      >
-        or try with sample data
-      </button>
+      <div className="flex flex-col items-center gap-2">
+        <button
+          type="button"
+          onClick={() => handleSampleClick("messy")}
+          disabled={isLoading}
+          className="rounded-full border border-accent/40 bg-accent-muted px-4 py-2 text-sm font-medium text-accent transition-colors hover:border-accent disabled:opacity-50"
+        >
+          ✨ Try with a messy bank export
+        </button>
+        <button
+          type="button"
+          onClick={() => handleSampleClick("clean")}
+          disabled={isLoading}
+          className="text-xs text-text-faint underline-offset-4 hover:text-text-muted hover:underline disabled:opacity-50"
+        >
+          or try with clean sample data
+        </button>
+      </div>
     </div>
   );
 }
