@@ -1,9 +1,11 @@
 # 📄 CSV Agent
 
-A minimal, real AI agent. It takes a CSV file and a question, then
+A minimal, real AI agent which takes a CSV file and a question, then
 decides for itself which tools to call — and in what order — to find
 the answer. You can hand it almost any bank's transaction export — it
 adapts the file into a canonical schema first, then runs the loop.
+
+See [the live demo](https://csv-agent-vert.vercel.app) in action
 
 There are two ways to use it: a **CLI** and a **web frontend**. Both run
 the exact same agent loop — the frontend doesn't reimplement anything,
@@ -51,6 +53,11 @@ balance-sheet movements (transfers, drawings, VAT, tax, loan principal,
 capital expenditure) that must never appear on a P&L. The `generate_pl`
 tool groups categorised rows into this structure and surfaces any
 unclassified transactions as exceptions requiring human review.
+
+`detectProfile()` also identifies the file's currency. That code is passed
+through to the agent loop so figures are formatted with the right symbol
+(£/$/€/ISO code) instead of assuming GBP — see `buildSystemPrompt()` in
+`lib/agent-core.js`.
 
 ## Project structure
 
@@ -130,6 +137,13 @@ decision loop happening live — including a spinner while Claude is
 thinking, and a 💭 line whenever Claude narrates its reasoning before
 calling a tool.
 
+In an interactive terminal, once Claude answers you'll be prompted
+`❓ Follow-up (press Enter to exit)`. The conversation (including everything
+Claude has already read and calculated) carries forward, so a follow-up
+like "and what about groceries specifically?" doesn't need to restate any
+context — press Enter with no input to end the session. Piped/non-interactive
+runs (e.g. in CI) just answer the one question and exit, as before.
+
 Files involved: `agent.js`, `lib/csv-adapt.js`, `lib/agent-core.js`, `tools.js`.
 
 ## Frontend version
@@ -158,17 +172,25 @@ How it works:
    remap columns; the canonical preview updates live, computed entirely in
    the browser via `src/lib/canonical-preview.ts` (no server round-trip).
 3. You pick a predefined question chip or type your own.
-4. The browser POSTs `{ csvData, question, profile }` to `/api/agent`,
-   which transforms the CSV using the confirmed profile (skipping
-   re-detection), writes the canonical result to a server-side temp file,
-   and runs `lib/agent-core.js` against it — the same loop the CLI uses.
+4. The browser POSTs `{ csvData, question, profile, history }` to
+   `/api/agent`, which transforms the CSV using the confirmed profile
+   (skipping re-detection), writes the canonical result to a server-side
+   temp file, and runs `lib/agent-core.js` against it — the same loop the
+   CLI uses. `history` is the prior conversation's messages (empty on the
+   first question); the agent restates the file path on every turn, so a
+   follow-up works correctly even though each request writes the canonical
+   CSV to a fresh temp path.
 5. Every step (`turn_start`, `thinking`, `tool_call`, `tool_result`,
    `answer`, `done`/`error`) is streamed back as one line of NDJSON the
    instant it happens, and rendered live as an animated feed — no
-   batching, no WebSockets, no raw JSON shown on screen.
+   batching, no WebSockets, no raw JSON shown on screen. The `done` event
+   also carries the updated `messages`, which the browser holds in memory
+   and sends back as `history` on the next question.
 6. The final answer renders as a formatted card with bold text, tables,
    and a "N turns · N tool calls · N.Ns" footer; "Ask another question"
-   resets the feed without re-uploading the file.
+   continues the same conversation (no restating context) without
+   re-uploading the file — upload a new file or click "Change file" to
+   start a fresh conversation.
 
 Nothing is persisted server-side — the temp CSV file is deleted as soon
 as the request finishes, and there's no database or auth; it's a local
