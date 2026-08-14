@@ -41,6 +41,8 @@ The target user is a UK bookkeeper or small-practice accountant who:
 
 ### 1. Saved adapt profiles — "remember this bank's format"
 
+**✅ Done — 2026-08-14** (CLI: `--profile`/`--save-profile` + `lib/profile-store.js`; web: `src/lib/saved-profiles.ts` + confirm-panel dropdown to pick any saved profile, not just the auto-matched one).
+
 After the first successful adaptation of a bank's CSV, the user should be
 able to **save the detected profile** (column mapping, date format, bank
 name, any manual overrides from the column-confirm panel) so that next
@@ -159,7 +161,7 @@ changes.
 1. **Messy sample data** (standalone, see below) — improves the demo
    immediately, no backend changes. ✅ Done — 2026-08-14.
 2. **Saved profiles** (goal 1) — the smallest useful persistence
-   feature; unlocks everything else.
+   feature; unlocks everything else. ✅ Done — 2026-08-14.
 3. **Saved merchant classifications** (goal 2) — depends on profiles
    existing.
 4. **Recipe flow** (goal 3) — combines 1 + 2 into a one-click

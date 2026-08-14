@@ -11,6 +11,7 @@ import {
   parseFromHeader,
   type RawPreview,
 } from "@/lib/canonical-preview";
+import { findProfileForBank, saveProfile as persistProfile, type SavedProfile } from "@/lib/saved-profiles";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB, per the upload-state spec
 
@@ -40,6 +41,10 @@ export function useAgent() {
   const [profile, setProfile] = useState<AdaptProfile | null>(null);
   const [rawPreview, setRawPreview] = useState<RawPreview | null>(null);
   const [fileName, setFileName] = useState<string>("");
+  // Set when a saved profile matches this file's detected bank name — the
+  // confirm panel pre-fills from it (instead of the freshly detected
+  // mapping) and shows where the pre-filled values came from.
+  const [savedProfileMatch, setSavedProfileMatch] = useState<SavedProfile | null>(null);
 
   // Kept out of React state — only read inside askQuestion, and putting raw CSV
   // text / the confirmed profile in render state would buy nothing here.
@@ -82,8 +87,13 @@ export function useAgent() {
           return;
         }
 
-        // Needs adapting — show the editable confirmation panel.
+        // Needs adapting — show the editable confirmation panel. `profile`
+        // always holds the freshly detected mapping; savedProfileMatch (if
+        // any) is just the suggested starting point — the panel decides
+        // which one `edited` actually starts from and lets the user pick
+        // any other saved profile too.
         const detected = data.profile as AdaptProfile;
+        setSavedProfileMatch(findProfileForBank(detected.bankName));
         setProfile(detected);
         setRawPreview(parseFromHeader(text, detected.headerRowIndex));
         setStatus("confirming");
@@ -98,9 +108,13 @@ export function useAgent() {
 
   // The user confirmed (and possibly edited) the column mapping. Lock it in,
   // show the canonical preview in the sidebar, and move on to asking.
-  const confirmProfile = useCallback((confirmed: AdaptProfile) => {
+  // saveAs, if given, persists this mapping under that name for next time.
+  const confirmProfile = useCallback((confirmed: AdaptProfile, saveAs?: string) => {
     const text = csvDataRef.current;
     if (!text) return;
+
+    if (saveAs) persistProfile(saveAs, confirmed);
+    setSavedProfileMatch(null);
 
     const raw = parseFromHeader(text, confirmed.headerRowIndex);
     profileRef.current = confirmed;
@@ -246,6 +260,7 @@ export function useAgent() {
     setProfile(null);
     setRawPreview(null);
     setFileName("");
+    setSavedProfileMatch(null);
     setCsvInfo(null);
     setPreviewRows([]);
     setSteps([]);
@@ -268,6 +283,7 @@ export function useAgent() {
     profile,
     rawPreview,
     fileName,
+    savedProfileMatch,
     confirmProfile,
     uploadCsv,
     loadSample,
