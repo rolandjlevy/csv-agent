@@ -42,10 +42,12 @@ function normaliseDate(value: string, format: AdaptProfile["dateFormat"]): strin
   if (!text) return text;
   const pad = (s: string) => s.padStart(2, "0");
 
-  if (format === "YYYY-MM-DD") {
-    const m = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-    return m ? `${pad(m[3])}/${pad(m[2])}/${m[1]}` : text;
-  }
+  // Mirrors the per-value ISO detection in lib/csv-adapt.js's normaliseDate —
+  // a value can be YYYY-MM-DD even when the file's detected format is
+  // day-first, so this must not trust the file-wide profile blindly.
+  const iso = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return `${pad(iso[3])}/${pad(iso[2])}/${iso[1]}`;
+  if (format === "YYYY-MM-DD") return text;
 
   const parts = text.split(/[/\-.]/);
   if (parts.length < 3) return text;
