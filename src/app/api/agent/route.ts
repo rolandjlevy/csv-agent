@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { unlink, writeFile } from "fs/promises";
 import os from "os";
 import path from "path";
-import { runAgentLoop, type AgentEvent } from "@lib/agent-core";
+import { runAgentLoop, type AgentEvent, type AgentMessage } from "@lib/agent-core";
 import { adaptCsv, transformAndCategorise, type AdaptProfile } from "@lib/csv-adapt";
 
 export const runtime = "nodejs";
@@ -11,6 +11,10 @@ interface AgentRequestBody {
   csvData?: unknown;
   question?: unknown;
   profile?: AdaptProfile;
+  // Prior conversation (as returned in an earlier response's "done" event's
+  // `messages`) — sent back to continue asking follow-up questions with full
+  // context instead of starting a fresh conversation each time.
+  history?: unknown;
 }
 
 function ndjsonText(event: AgentEvent): string {
@@ -35,7 +39,7 @@ export async function POST(req: Request): Promise<Response> {
     return singleEventResponse({ type: "error", message: "Invalid JSON body." });
   }
 
-  const { csvData, question, profile } = body;
+  const { csvData, question, profile, history } = body;
 
   if (typeof csvData !== "string" || !csvData.trim()) {
     return singleEventResponse({ type: "error", message: "Missing or invalid csvData." });
@@ -43,6 +47,9 @@ export async function POST(req: Request): Promise<Response> {
   if (typeof question !== "string" || !question.trim()) {
     return singleEventResponse({ type: "error", message: "Missing or invalid question." });
   }
+  const priorMessages: AgentMessage[] | undefined = Array.isArray(history)
+    ? (history as AgentMessage[])
+    : undefined;
   if (!process.env.ANTHROPIC_API_KEY) {
     return singleEventResponse({
       type: "error",
@@ -69,6 +76,8 @@ export async function POST(req: Request): Promise<Response> {
         await writeFile(tempPath, adapted.csv, "utf8");
 
         await runAgentLoop(tempPath, question, {
+          history: priorMessages,
+          currency: adapted.profile?.currencyCode,
           onEvent(event) {
             controller.enqueue(ndjsonLine(event));
           },

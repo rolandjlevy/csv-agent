@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import Papa from "papaparse";
-import type { AgentEvent } from "@lib/agent-core";
+import type { AgentEvent, AgentMessage } from "@lib/agent-core";
 import type { AdaptProfile, AgentStats, AgentStatus, CsvInfo } from "@/types/agent";
 import {
   CANONICAL_COLUMNS,
@@ -46,6 +46,10 @@ export function useAgent() {
   const csvDataRef = useRef<string | null>(null);
   const profileRef = useRef<AdaptProfile | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Prior conversation turns, carried forward so "Ask another question"
+  // continues the same conversation instead of restating context from
+  // scratch. Cleared on reset() (new file); NOT cleared on askAnother().
+  const historyRef = useRef<AgentMessage[]>([]);
 
   // Already-canonical (or detection failed/skipped) — go straight to asking,
   // showing the browser-parsed preview as-is.
@@ -164,7 +168,12 @@ export function useAgent() {
         const response = await fetch("/api/agent", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ csvData, question: q, profile: profileRef.current ?? undefined }),
+          body: JSON.stringify({
+            csvData,
+            question: q,
+            profile: profileRef.current ?? undefined,
+            history: historyRef.current,
+          }),
           signal: controller.signal,
         });
 
@@ -192,6 +201,7 @@ export function useAgent() {
               setAnswer(event.text);
               setSteps((prev) => [...prev, event]);
             } else if (event.type === "done") {
+              historyRef.current = event.messages;
               setStats({
                 turns: event.total_turns,
                 toolCalls,
@@ -229,6 +239,7 @@ export function useAgent() {
     abortRef.current?.abort();
     csvDataRef.current = null;
     profileRef.current = null;
+    historyRef.current = [];
     setProfile(null);
     setRawPreview(null);
     setFileName("");

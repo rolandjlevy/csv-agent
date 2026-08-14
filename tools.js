@@ -94,13 +94,28 @@ function dateRange(dates) {
 
 // "month=June" has no real column on the row — derive it from Date
 // (dd/mm/yyyy). Any other "key=value" filters straight columns.
-function rowMonthName(row) {
+function rowMonthParts(row) {
   const dateValue = getField(row, 'date');
   if (!dateValue) return undefined;
   const parts = String(dateValue).split('/');
   if (parts.length !== 3) return undefined;
   const monthIndex = parseInt(parts[1], 10) - 1;
-  return MONTH_NAMES[monthIndex];
+  const year = parseInt(parts[2], 10);
+  if (monthIndex < 0 || monthIndex > 11 || !year) return undefined;
+  return { monthName: MONTH_NAMES[monthIndex], year };
+}
+
+// Accepts "June" (matches that month in every year — legacy, ambiguous on a
+// multi-year file), "June 2024", or "2024-06" (both year-specific).
+function parseMonthFilterValue(value) {
+  let m = value.match(/^(\d{4})-(\d{1,2})$/);
+  if (m) {
+    const monthIndex = parseInt(m[2], 10) - 1;
+    return { monthName: MONTH_NAMES[monthIndex], year: parseInt(m[1], 10) };
+  }
+  m = value.match(/^([A-Za-z]+)\s+(\d{4})$/);
+  if (m) return { monthName: m[1].toLowerCase(), year: parseInt(m[2], 10) };
+  return { monthName: value.toLowerCase(), year: null };
 }
 
 function applyFilter(rows, filter) {
@@ -110,9 +125,17 @@ function applyFilter(rows, filter) {
   const key = rawKey.trim();
   const value = rawValue.trim();
 
+  if (key.toLowerCase() === 'month') {
+    const { monthName, year } = parseMonthFilterValue(value);
+    return rows.filter((row) => {
+      const parts = rowMonthParts(row);
+      if (!parts || parts.monthName !== monthName) return false;
+      return year == null || parts.year === year;
+    });
+  }
+
   return rows.filter((row) => {
-    const actual =
-      key.toLowerCase() === 'month' ? rowMonthName(row) : getField(row, key);
+    const actual = getField(row, key);
     return String(actual ?? '').toLowerCase() === value.toLowerCase();
   });
 }
