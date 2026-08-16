@@ -17,31 +17,28 @@ export function Header() {
           <path d="M8 17h5" />
         </svg>
         <h1 className="font-display text-3xl font-bold tracking-tight text-text sm:text-4xl">
-          CSV Agent
+          Statement Sorter
         </h1>
       </div>
       <p className="mt-1 text-base font-medium text-text sm:text-lg">
-        Drop a bank CSV. Ask anything.
+        Stop reformatting your clients&rsquo; bank exports every month.
       </p>
 
       <p className="mt-3 max-w-xl text-xs leading-relaxed text-text-muted sm:text-sm">
-        An{' '}
-        <Term detail="An LLM that decides which action to take next in a loop, rather than running a fixed script.">
-          AI agent
+        Drop the CSV — any bank, any layout. Statement Sorter reads the file, sorts your
+        transactions into clear{' '}
+        <Term detail="Income, cost of sales and overheads — not just a pile of categorised rows.">
+          categories
+        </Term>
+        , and shows you exactly where the money went — with a proper{' '}
+        <Term detail="Profit & Loss — the report that separates real income and costs from balance-sheet noise like transfers and drawings.">
+          P&amp;L
         </Term>{' '}
-        that reads{' '}
-        <Term detail="Santander, Monzo, whatever — it auto-detects the columns and normalises them before answering.">
-          any bank&rsquo;s CSV
-        </Term>{' '}
-        and answers your questions in{' '}
-        <Term detail="No formulas or pivot tables. Just ask: “What did I spend most on in June?”">
-          plain English
-        </Term>{' '}
-        — choosing{' '}
-        <Term detail="read_csv, analyse, write_report — Claude picks the order at runtime based on your question.">
-          its own tools
-        </Term>{' '}
-        as it goes.
+        ready to export into{' '}
+        <Term detail="The cloud accounting platforms most UK bookkeepers already use.">
+          Xero, QuickBooks or FreeAgent
+        </Term>
+        . In the time it used to take to rename the columns.
       </p>
     </header>
   );

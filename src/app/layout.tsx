@@ -18,8 +18,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'CSV Agent',
-  description: 'Drop a bank CSV. Ask anything.',
+  title: 'Statement Sorter',
+  description: "Stop reformatting your clients' bank exports every month.",
 };
 
 export default function RootLayout({
