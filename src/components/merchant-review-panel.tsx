@@ -5,19 +5,27 @@ import { CATEGORY_NAMES } from "@/lib/categories";
 interface MerchantReviewPanelProps {
   merchants: { key: string; category: string }[];
   onReclassify: (key: string, category: string) => void;
+  profileName?: string | null;
 }
 
 const selectClass =
   "rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text focus:border-accent focus:outline-none";
 
-export function MerchantReviewPanel({ merchants, onReclassify }: MerchantReviewPanelProps) {
+export function MerchantReviewPanel({ merchants, onReclassify, profileName }: MerchantReviewPanelProps) {
   if (merchants.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-bg-surface p-4">
       <p className="text-sm font-medium text-text">
-        🏷️ {merchants.length} new merchant{merchants.length === 1 ? "" : "s"} classified this
-        run — reclassify if wrong
+        🏷️ {merchants.length} new merchant{merchants.length === 1 ? "" : "s"} classified
+        {profileName ? (
+          <>
+            {" "}
+            — saved to your &ldquo;{profileName}&rdquo; recipe
+          </>
+        ) : (
+          " this run — reclassify if wrong"
+        )}
       </p>
       <ul className="flex flex-col gap-2">
         {merchants.map((m) => (

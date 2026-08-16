@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAgent } from "@/hooks/use-agent";
 import { Header } from "@/components/header";
 import { CsvDropzone } from "@/components/csv-dropzone";
 import { CsvPreview } from "@/components/csv-preview";
 import { ColumnConfirmPanel } from "@/components/column-confirm-panel";
+import { RecipeBanner } from "@/components/recipe-banner";
 import { QuestionPanel } from "@/components/question-panel";
 import { AgentFeed } from "@/components/agent-feed";
 import { AnswerCard } from "@/components/answer-card";
@@ -25,10 +26,18 @@ const stateTransition = {
 export default function Home() {
   const agent = useAgent();
   const feedEndRef = useRef<HTMLDivElement>(null);
+  // Which UI to show when a saved recipe matches — purely a view concern,
+  // not agent/data state, so it lives here rather than in useAgent. Resets
+  // whenever a new match arrives (new file dropped).
+  const [recipeDismissed, setRecipeDismissed] = useState(false);
 
   useEffect(() => {
     feedEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [agent.steps, agent.answer, agent.error]);
+
+  useEffect(() => {
+    setRecipeDismissed(false);
+  }, [agent.savedProfileMatch]);
 
   const isUploadState = agent.status === "idle" || agent.status === "uploading";
   const isConfirmState = agent.status === "confirming";
@@ -64,14 +73,23 @@ export default function Home() {
             {...stateTransition}
             className="mx-auto flex max-w-3xl flex-col gap-6 px-4 pb-16"
           >
-            <ColumnConfirmPanel
-              fileName={agent.fileName}
-              profile={agent.profile}
-              rawPreview={agent.rawPreview}
-              savedProfileMatch={agent.savedProfileMatch}
-              onConfirm={agent.confirmProfile}
-              onCancel={agent.reset}
-            />
+            {agent.savedProfileMatch && !recipeDismissed ? (
+              <RecipeBanner
+                name={agent.savedProfileMatch.name}
+                fileName={agent.fileName}
+                onRun={agent.runRecipe}
+                onReview={() => setRecipeDismissed(true)}
+              />
+            ) : (
+              <ColumnConfirmPanel
+                fileName={agent.fileName}
+                profile={agent.profile}
+                rawPreview={agent.rawPreview}
+                savedProfileMatch={agent.savedProfileMatch}
+                onConfirm={agent.confirmProfile}
+                onCancel={agent.reset}
+              />
+            )}
           </motion.main>
         )}
 
@@ -126,6 +144,7 @@ export default function Home() {
               <MerchantReviewPanel
                 merchants={agent.newMerchants}
                 onReclassify={agent.overrideMerchant}
+                profileName={agent.activeProfileName}
               />
             )}
 

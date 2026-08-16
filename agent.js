@@ -64,7 +64,25 @@ async function prepareCsv(filePath, { profileName, saveProfileName } = {}) {
       console.log(`💾 Also saved as "${saveProfileName}" (${profileStore.profilePath(saveProfileName)})`);
     }
   } else {
-    result = await adaptCsv(raw, { onEvent });
+    // No --profile given — try to auto-match a previously saved recipe by
+    // bank name or column layout before falling back to full detection. This
+    // is what lets `node agent.js export.csv "question"` reuse a saved
+    // merchant map with zero flags once one matching recipe has been saved.
+    let matchedName = null;
+    result = await adaptCsv(raw, {
+      onEvent,
+      resolveProfile: (detected) => {
+        const match = profileStore.findMatchingProfile(detected, profileStore.listProfiles());
+        if (!match) return null;
+        matchedName = match.name;
+        console.log(`📎 Auto-matched saved recipe "${match.name}" (${match.profile.bankName || 'Unknown'}).`);
+        return { profile: match.profile, merchantMap: match.profile.merchantMap || {}, name: match.name };
+      },
+    });
+    if (matchedName && result.newMerchantKeys.length > 0) {
+      profileStore.saveProfile(matchedName, { ...profileStore.loadProfile(matchedName), merchantMap: result.merchantMap });
+      console.log(`🧠 Learned ${result.newMerchantKeys.length} new merchant classification(s) — saved back to "${matchedName}".`);
+    }
     if (saveProfileName) {
       if (result.profile) {
         profileStore.saveProfile(saveProfileName, { ...result.profile, merchantMap: result.merchantMap });

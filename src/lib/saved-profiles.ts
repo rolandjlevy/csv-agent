@@ -79,11 +79,76 @@ export function setMerchantOverride(name: string, merchant: string, category: st
 }
 
 // Best-effort match for "was this bank's format saved before" — by bank
-// name, case-insensitively. Column-fingerprint matching is out of scope here
-// (that's the later "recipes" goal); this only needs to answer the simpler
-// question this goal asks.
+// name, case-insensitively. Superseded by findMatchingProfile() below for
+// anything driving the confirm/recipe flow (it also falls back to a column
+// fingerprint); kept as a standalone export since it's a useful narrower
+// query in its own right.
 export function findProfileForBank(bankName: string | undefined): SavedProfile | null {
   const target = (bankName || "").trim().toLowerCase();
   if (!target || target === "unknown") return null;
   return readAll().find((p) => (p.profile.bankName || "").trim().toLowerCase() === target) ?? null;
+}
+
+function norm(value: string | undefined): string {
+  return (value || "").trim().toLowerCase();
+}
+
+// Two profiles agree structurally: same date/description columns, same
+// amount convention, and same amount field(s) for that convention. Column
+// NAMES only — never trusts amount values.
+function fieldsMatch(a: AdaptProfile, b: AdaptProfile): boolean {
+  if (norm(a.dateColumn) !== norm(b.dateColumn)) return false;
+  if (norm(a.descriptionColumn) !== norm(b.descriptionColumn)) return false;
+  if (a.amountConvention !== b.amountConvention) return false;
+  if (a.amountConvention === "signed") {
+    return norm(a.amountColumn) !== "" && norm(a.amountColumn) === norm(b.amountColumn);
+  }
+  return (
+    norm(a.moneyInColumn) !== "" &&
+    norm(a.moneyInColumn) === norm(b.moneyInColumn) &&
+    norm(a.moneyOutColumn) === norm(b.moneyOutColumn)
+  );
+}
+
+function bankNamesConflict(bankA: string | undefined, bankB: string | undefined): boolean {
+  const a = norm(bankA);
+  const b = norm(bankB);
+  if (!a || !b || a === "unknown" || b === "unknown") return false;
+  return a !== b;
+}
+
+function bankNamesAgree(bankA: string | undefined, bankB: string | undefined): boolean {
+  const a = norm(bankA);
+  const b = norm(bankB);
+  return Boolean(a) && Boolean(b) && a !== "unknown" && b !== "unknown" && a === b;
+}
+
+// Finds the one saved profile a freshly detected profile matches — by bank
+// name first, then by column layout — or null if there's no match or the
+// match is ambiguous. Guessing wrong here would silently misclassify a P&L,
+// so ties/uncertainty always fall through to the manual confirm flow rather
+// than picking one. Mirrors lib/profile-store.js's findMatchingProfile with
+// no dependency on it.
+export function findMatchingProfile(detected: AdaptProfile | undefined | null): SavedProfile | null {
+  if (!detected) return null;
+  const candidates = readAll();
+  if (candidates.length === 0) return null;
+
+  // Tier 1 — exact bank name.
+  const byBank = candidates.filter((c) => bankNamesAgree(detected.bankName, c.profile.bankName));
+  if (byBank.length === 1) return byBank[0];
+  if (byBank.length > 1) return null;
+
+  // Tier 2 — structural fingerprint. Headerless files (columns addressed by
+  // bare index, e.g. "0"/"1") fingerprint on nothing meaningful, so require
+  // bank-name agreement rather than trusting index collisions.
+  const headerless = detected.hasHeaderRow === false;
+  const fingerprinted = candidates.filter((c) => {
+    if (bankNamesConflict(detected.bankName, c.profile.bankName)) return false;
+    if (headerless || c.profile.hasHeaderRow === false) {
+      return bankNamesAgree(detected.bankName, c.profile.bankName);
+    }
+    return fieldsMatch(detected, c.profile);
+  });
+  return fingerprinted.length === 1 ? fingerprinted[0] : null;
 }

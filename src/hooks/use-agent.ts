@@ -12,7 +12,7 @@ import {
   type RawPreview,
 } from "@/lib/canonical-preview";
 import {
-  findProfileForBank,
+  findMatchingProfile,
   getMerchantMap,
   mergeMerchantMap,
   saveProfile as persistProfile,
@@ -21,6 +21,12 @@ import {
 } from "@/lib/saved-profiles";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB, per the upload-state spec
+
+// Fired by runRecipe() instead of waiting on QuestionPanel input. Phrasing
+// matches the exact "P&L / profit / management-accounts" trigger the agent
+// loop's system prompt already keys off (lib/agent-core.js), so generate_pl
+// reliably fires without any change to that file.
+const RECIPE_QUESTION = "Give me the profit & loss for the most recent period in this data.";
 
 type CsvRow = Record<string, string>;
 
@@ -73,6 +79,12 @@ export function useAgent() {
   // text / the confirmed profile in render state would buy nothing here.
   const csvDataRef = useRef<string | null>(null);
   const profileRef = useRef<AdaptProfile | null>(null);
+  // Mirrors activeProfileName for synchronous same-tick reads — runRecipe()
+  // calls confirmProfile() (which sets activeProfileName via setState, async)
+  // immediately followed by askQuestion() in the same callback; askQuestion
+  // would otherwise read the previous render's stale closure and silently
+  // skip the known-merchant map on the recipe's first question.
+  const activeProfileNameRef = useRef<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   // Prior conversation turns, carried forward so "Ask another question"
   // continues the same conversation instead of restating context from
@@ -116,7 +128,7 @@ export function useAgent() {
         // which one `edited` actually starts from and lets the user pick
         // any other saved profile too.
         const detected = data.profile as AdaptProfile;
-        setSavedProfileMatch(findProfileForBank(detected.bankName));
+        setSavedProfileMatch(findMatchingProfile(detected));
         setProfile(detected);
         setRawPreview(parseFromHeader(text, detected.headerRowIndex));
         setStatus("confirming");
@@ -138,6 +150,7 @@ export function useAgent() {
 
     if (saveAs) {
       persistProfile(saveAs, confirmed);
+      activeProfileNameRef.current = saveAs;
       setActiveProfileName(saveAs);
     }
     setSavedProfileMatch(null);
@@ -217,7 +230,9 @@ export function useAgent() {
             question: q,
             profile: profileRef.current ?? undefined,
             history: historyRef.current,
-            knownMerchantMap: activeProfileName ? getMerchantMap(activeProfileName) : undefined,
+            knownMerchantMap: activeProfileNameRef.current
+              ? getMerchantMap(activeProfileNameRef.current)
+              : undefined,
           }),
           signal: controller.signal,
         });
@@ -241,8 +256,8 @@ export function useAgent() {
             const event: AgentEvent | MerchantClassificationEvent = JSON.parse(line);
 
             if (event.type === "merchant_classification") {
-              if (activeProfileName && event.newKeys.length > 0) {
-                mergeMerchantMap(activeProfileName, event.merchantMap);
+              if (activeProfileNameRef.current && event.newKeys.length > 0) {
+                mergeMerchantMap(activeProfileNameRef.current, event.merchantMap);
               }
               if (event.newKeys.length > 0) {
                 setNewMerchants(
@@ -280,7 +295,7 @@ export function useAgent() {
         setStatus("error");
       }
     })();
-  }, [activeProfileName]);
+  }, []);
 
   const askAnother = useCallback(() => {
     abortRef.current?.abort();
@@ -304,10 +319,19 @@ export function useAgent() {
     [activeProfileName]
   );
 
+  // One-click recipe: skip the confirm panel and QuestionPanel entirely —
+  // lock in the matched saved profile, then immediately ask for the P&L.
+  const runRecipe = useCallback(() => {
+    if (!savedProfileMatch) return;
+    confirmProfile(savedProfileMatch.profile, savedProfileMatch.name);
+    askQuestion(RECIPE_QUESTION);
+  }, [savedProfileMatch, confirmProfile, askQuestion]);
+
   const reset = useCallback(() => {
     abortRef.current?.abort();
     csvDataRef.current = null;
     profileRef.current = null;
+    activeProfileNameRef.current = null;
     historyRef.current = [];
     setProfile(null);
     setRawPreview(null);
@@ -346,6 +370,7 @@ export function useAgent() {
     askQuestion,
     askAnother,
     overrideMerchant,
+    runRecipe,
     reset,
   };
 }
