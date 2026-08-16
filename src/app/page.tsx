@@ -11,6 +11,9 @@ import { QuestionPanel } from "@/components/question-panel";
 import { AgentFeed } from "@/components/agent-feed";
 import { AnswerCard } from "@/components/answer-card";
 import { MerchantReviewPanel } from "@/components/merchant-review-panel";
+import { BenefitStrip } from "@/components/benefit-strip";
+import { HowItWorks } from "@/components/how-it-works";
+import { SecondaryFeatures } from "@/components/secondary-features";
 
 const stateTransition = {
   initial: { opacity: 0, y: 12 },
@@ -42,13 +45,16 @@ export default function Home() {
           <motion.main
             key="upload"
             {...stateTransition}
-            className="flex min-h-[60vh] flex-col items-center justify-center"
+            className="flex flex-col items-center gap-2 pb-16"
           >
+            <BenefitStrip />
             <CsvDropzone
               onFileAccepted={agent.uploadCsv}
               onSampleClick={agent.loadSample}
               isLoading={agent.status === "uploading"}
             />
+            <HowItWorks />
+            <SecondaryFeatures />
           </motion.main>
         )}
 

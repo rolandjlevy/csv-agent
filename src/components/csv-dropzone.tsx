@@ -60,7 +60,28 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
   );
 
   return (
-    <div className="flex w-full max-w-xl flex-col items-center gap-4 px-4">
+    <div className="flex w-full max-w-xl flex-col items-center gap-6 px-4">
+      <div className="flex w-full flex-col items-center gap-3 rounded-xl border border-accent/40 bg-accent-muted px-6 py-8 text-center">
+        <p className="text-sm font-medium text-text">No file to hand? See it work instantly.</p>
+        <button
+          type="button"
+          onClick={() => handleSampleClick("messy")}
+          disabled={isLoading}
+          className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          ✨ Try with a messy bank export
+        </button>
+        <p className="text-xs text-text-faint">
+          Watch it detect columns, strip £ signs, and categorise automatically.
+        </p>
+      </div>
+
+      <div className="flex w-full items-center gap-3 text-xs text-text-faint">
+        <span className="h-px flex-1 bg-border-subtle" />
+        or drop your own
+        <span className="h-px flex-1 bg-border-subtle" />
+      </div>
+
       <div
         {...getRootProps()}
         className={`dropzone-idle w-full cursor-pointer rounded-xl border-2 border-dashed transition-colors ${
@@ -100,24 +121,14 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
 
       {localError && <p className="text-sm text-error">{localError}</p>}
 
-      <div className="flex flex-col items-center gap-2">
-        <button
-          type="button"
-          onClick={() => handleSampleClick("messy")}
-          disabled={isLoading}
-          className="rounded-full border border-accent/40 bg-accent-muted px-4 py-2 text-sm font-medium text-accent transition-colors hover:border-accent disabled:opacity-50"
-        >
-          ✨ Try with a messy bank export
-        </button>
-        <button
-          type="button"
-          onClick={() => handleSampleClick("clean")}
-          disabled={isLoading}
-          className="text-xs text-text-faint underline-offset-4 hover:text-text-muted hover:underline disabled:opacity-50"
-        >
-          or try with clean sample data
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => handleSampleClick("clean")}
+        disabled={isLoading}
+        className="text-xs text-text-faint underline-offset-4 hover:text-text-muted hover:underline disabled:opacity-50"
+      >
+        or try with clean sample data
+      </button>
     </div>
   );
 }

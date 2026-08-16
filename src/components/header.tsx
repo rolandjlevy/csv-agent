@@ -17,31 +17,27 @@ export function Header() {
           <path d="M8 17h5" />
         </svg>
         <h1 className="font-display text-3xl font-bold tracking-tight text-text sm:text-4xl">
-          CSV Agent
+          Statement Sorter
         </h1>
       </div>
       <p className="mt-1 text-base font-medium text-text sm:text-lg">
-        Drop a bank CSV. Ask anything.
+        Bank statements in. Categorised books out.
       </p>
 
       <p className="mt-3 max-w-xl text-xs leading-relaxed text-text-muted sm:text-sm">
-        An{' '}
-        <Term detail="An LLM that decides which action to take next in a loop, rather than running a fixed script.">
-          AI agent
-        </Term>{' '}
-        that reads{' '}
-        <Term detail="Santander, Monzo, whatever — it auto-detects the columns and normalises them before answering.">
-          any bank&rsquo;s CSV
-        </Term>{' '}
-        and answers your questions in{' '}
-        <Term detail="No formulas or pivot tables. Just ask: “What did I spend most on in June?”">
-          plain English
-        </Term>{' '}
-        — choosing{' '}
-        <Term detail="read_csv, analyse, write_report — Claude picks the order at runtime based on your question.">
-          its own tools
-        </Term>{' '}
-        as it goes.
+        Drop any UK bank&rsquo;s CSV. It sorts every transaction into a proper{' '}
+        <Term detail="Income, cost of sales and overheads — not just a pile of categorised rows.">
+          chart of accounts
+        </Term>
+        , keeps transfers and drawings off your{' '}
+        <Term detail="Profit & Loss — the report that separates real income and costs from balance-sheet noise like transfers and drawings.">
+          P&amp;L
+        </Term>
+        , and exports straight into{' '}
+        <Term detail="The cloud accounting software most UK bookkeepers already use.">
+          Xero
+        </Term>
+        .
       </p>
     </header>
   );
