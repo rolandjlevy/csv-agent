@@ -19,7 +19,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: 'Statement Sorter',
-  description: 'Bank statements in. Categorised books out.',
+  description: "Stop reformatting your clients' bank exports every month.",
 };
 
 export default function RootLayout({

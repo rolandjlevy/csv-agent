@@ -21,23 +21,24 @@ export function Header() {
         </h1>
       </div>
       <p className="mt-1 text-base font-medium text-text sm:text-lg">
-        Bank statements in. Categorised books out.
+        Stop reformatting your clients&rsquo; bank exports every month.
       </p>
 
       <p className="mt-3 max-w-xl text-xs leading-relaxed text-text-muted sm:text-sm">
-        Drop any UK bank&rsquo;s CSV. It sorts every transaction into a proper{' '}
+        Drop the CSV — any bank, any layout. Statement Sorter reads the file, sorts your
+        transactions into clear{' '}
         <Term detail="Income, cost of sales and overheads — not just a pile of categorised rows.">
-          chart of accounts
+          categories
         </Term>
-        , keeps transfers and drawings off your{' '}
+        , and shows you exactly where the money went — with a proper{' '}
         <Term detail="Profit & Loss — the report that separates real income and costs from balance-sheet noise like transfers and drawings.">
           P&amp;L
+        </Term>{' '}
+        ready to export into{' '}
+        <Term detail="The cloud accounting platforms most UK bookkeepers already use.">
+          Xero, QuickBooks or FreeAgent
         </Term>
-        , and exports straight into{' '}
-        <Term detail="The cloud accounting software most UK bookkeepers already use.">
-          Xero
-        </Term>
-        .
+        . In the time it used to take to rename the columns.
       </p>
     </header>
   );
