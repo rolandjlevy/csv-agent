@@ -11,11 +11,26 @@ import {
   parseFromHeader,
   type RawPreview,
 } from "@/lib/canonical-preview";
-import { findProfileForBank, saveProfile as persistProfile, type SavedProfile } from "@/lib/saved-profiles";
+import {
+  findProfileForBank,
+  getMerchantMap,
+  mergeMerchantMap,
+  saveProfile as persistProfile,
+  setMerchantOverride,
+  type SavedProfile,
+} from "@/lib/saved-profiles";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB, per the upload-state spec
 
 type CsvRow = Record<string, string>;
+
+// Mirrors the synthetic NDJSON line src/app/api/agent/route.ts emits itself
+// (not part of the agent loop's own AgentEvent union).
+interface MerchantClassificationEvent {
+  type: "merchant_classification";
+  merchantMap: Record<string, string>;
+  newKeys: string[];
+}
 
 function parseCsvText(text: string): { columns: string[]; rows: CsvRow[] } {
   const result = Papa.parse<CsvRow>(text, { header: true, skipEmptyLines: true });
@@ -45,6 +60,14 @@ export function useAgent() {
   // confirm panel pre-fills from it (instead of the freshly detected
   // mapping) and shows where the pre-filled values came from.
   const [savedProfileMatch, setSavedProfileMatch] = useState<SavedProfile | null>(null);
+  // The saved profile name this session is writing merchant classifications
+  // into, if any — set when the user confirms a profile they chose to
+  // remember. Drives whether the known-merchant map is sent to /api/agent
+  // and whether the merchant review panel can persist corrections.
+  const [activeProfileName, setActiveProfileName] = useState<string | null>(null);
+  // Merchants newly classified by the most recent question, surfaced for
+  // the user to review/correct.
+  const [newMerchants, setNewMerchants] = useState<{ key: string; category: string }[]>([]);
 
   // Kept out of React state — only read inside askQuestion, and putting raw CSV
   // text / the confirmed profile in render state would buy nothing here.
@@ -113,7 +136,10 @@ export function useAgent() {
     const text = csvDataRef.current;
     if (!text) return;
 
-    if (saveAs) persistProfile(saveAs, confirmed);
+    if (saveAs) {
+      persistProfile(saveAs, confirmed);
+      setActiveProfileName(saveAs);
+    }
     setSavedProfileMatch(null);
 
     const raw = parseFromHeader(text, confirmed.headerRowIndex);
@@ -175,6 +201,7 @@ export function useAgent() {
     setAnswer(null);
     setStats(null);
     setError(null);
+    setNewMerchants([]);
     setStatus("running");
 
     let toolCalls = 0;
@@ -190,6 +217,7 @@ export function useAgent() {
             question: q,
             profile: profileRef.current ?? undefined,
             history: historyRef.current,
+            knownMerchantMap: activeProfileName ? getMerchantMap(activeProfileName) : undefined,
           }),
           signal: controller.signal,
         });
@@ -210,7 +238,19 @@ export function useAgent() {
 
           for (const line of lines) {
             if (!line.trim()) continue;
-            const event: AgentEvent = JSON.parse(line);
+            const event: AgentEvent | MerchantClassificationEvent = JSON.parse(line);
+
+            if (event.type === "merchant_classification") {
+              if (activeProfileName && event.newKeys.length > 0) {
+                mergeMerchantMap(activeProfileName, event.merchantMap);
+              }
+              if (event.newKeys.length > 0) {
+                setNewMerchants(
+                  event.newKeys.map((k) => ({ key: k, category: event.merchantMap[k] }))
+                );
+              }
+              continue;
+            }
 
             if (event.type === "tool_call") toolCalls += 1;
 
@@ -240,7 +280,7 @@ export function useAgent() {
         setStatus("error");
       }
     })();
-  }, []);
+  }, [activeProfileName]);
 
   const askAnother = useCallback(() => {
     abortRef.current?.abort();
@@ -248,9 +288,21 @@ export function useAgent() {
     setAnswer(null);
     setStats(null);
     setError(null);
+    setNewMerchants([]);
     setQuestion(null);
     setStatus("ready");
   }, []);
+
+  // Persists a manual reclassification into the active saved profile's
+  // merchant map, and updates the review panel's local state to reflect it.
+  const overrideMerchant = useCallback(
+    (key: string, category: string) => {
+      if (!activeProfileName) return;
+      setMerchantOverride(activeProfileName, key, category);
+      setNewMerchants((prev) => prev.map((m) => (m.key === key ? { ...m, category } : m)));
+    },
+    [activeProfileName]
+  );
 
   const reset = useCallback(() => {
     abortRef.current?.abort();
@@ -261,6 +313,8 @@ export function useAgent() {
     setRawPreview(null);
     setFileName("");
     setSavedProfileMatch(null);
+    setActiveProfileName(null);
+    setNewMerchants([]);
     setCsvInfo(null);
     setPreviewRows([]);
     setSteps([]);
@@ -284,11 +338,14 @@ export function useAgent() {
     rawPreview,
     fileName,
     savedProfileMatch,
+    activeProfileName,
+    newMerchants,
     confirmProfile,
     uploadCsv,
     loadSample,
     askQuestion,
     askAnother,
+    overrideMerchant,
     reset,
   };
 }

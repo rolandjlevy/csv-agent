@@ -23,6 +23,9 @@ export interface AdaptEvent {
 export interface AdaptOptions {
   apiKey?: string;
   onEvent?: (event: AdaptEvent) => void | Promise<void>;
+  /** Merchant key -> category, carried forward from a saved profile so only
+   * unknown merchants are sent to the classifier. */
+  knownMerchantMap?: Record<string, string>;
 }
 
 export interface AdaptResult {
@@ -31,6 +34,12 @@ export interface AdaptResult {
   rowCount: number | null;
   bankName: string | null;
   skipped: boolean;
+  /** Full accumulated merchant key -> category map (known + newly
+   * classified). Null when adaptation was skipped (already-canonical file). */
+  merchantMap: Record<string, string> | null;
+  /** Merchant keys that were newly classified this run (not present in the
+   * incoming knownMerchantMap). */
+  newMerchantKeys: string[];
 }
 
 export interface CanonicalRow {
@@ -50,6 +59,10 @@ export function transformAndCategorise(
 export function detectProfile(rawText: string, options?: { apiKey?: string }): Promise<AdaptProfile>;
 export function applyProfile(rawText: string, profile: AdaptProfile, bankName: string): CanonicalRow[];
 export function classifyMerchants(keys: string[], options?: { apiKey?: string }): Promise<Record<string, string>>;
+export function classifyMerchantsWithCache(
+  keys: string[],
+  knownMap?: Record<string, string>
+): { known: Record<string, string>; unknown: string[] };
 export function looksCanonical(rawText: string): boolean;
 export function parseAmount(value: unknown): number;
 export function normaliseDate(value: string, format: DateFormat): string;
