@@ -10,6 +10,7 @@ import { ColumnConfirmPanel } from "@/components/column-confirm-panel";
 import { QuestionPanel } from "@/components/question-panel";
 import { AgentFeed } from "@/components/agent-feed";
 import { AnswerCard } from "@/components/answer-card";
+import { MerchantReviewPanel } from "@/components/merchant-review-panel";
 
 const stateTransition = {
   initial: { opacity: 0, y: 12 },
@@ -113,6 +114,13 @@ export default function Home() {
 
             {agent.status === "done" && agent.answer && (
               <AnswerCard text={agent.answer} stats={agent.stats} />
+            )}
+
+            {agent.status === "done" && agent.activeProfileName && (
+              <MerchantReviewPanel
+                merchants={agent.newMerchants}
+                onReclassify={agent.overrideMerchant}
+              />
             )}
 
             {agent.error && (

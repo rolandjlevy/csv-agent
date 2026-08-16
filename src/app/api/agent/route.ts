@@ -15,13 +15,27 @@ interface AgentRequestBody {
   // `messages`) — sent back to continue asking follow-up questions with full
   // context instead of starting a fresh conversation each time.
   history?: unknown;
+  // Merchant key -> category carried forward from a saved profile, so only
+  // unknown merchants get sent to the classifier.
+  knownMerchantMap?: Record<string, string>;
 }
 
-function ndjsonText(event: AgentEvent): string {
+// A synthetic NDJSON line the route emits itself (not part of the agent
+// loop's own event union in lib/agent-core.js) carrying the merchant
+// classification result back to the browser so it can persist it.
+interface MerchantClassificationEvent {
+  type: "merchant_classification";
+  merchantMap: Record<string, string>;
+  newKeys: string[];
+}
+
+type StreamEvent = AgentEvent | MerchantClassificationEvent;
+
+function ndjsonText(event: StreamEvent): string {
   return JSON.stringify(event) + "\n";
 }
 
-function ndjsonLine(event: AgentEvent): Uint8Array {
+function ndjsonLine(event: StreamEvent): Uint8Array {
   return new TextEncoder().encode(ndjsonText(event));
 }
 
@@ -39,7 +53,7 @@ export async function POST(req: Request): Promise<Response> {
     return singleEventResponse({ type: "error", message: "Invalid JSON body." });
   }
 
-  const { csvData, question, profile, history } = body;
+  const { csvData, question, profile, history, knownMerchantMap } = body;
 
   if (typeof csvData !== "string" || !csvData.trim()) {
     return singleEventResponse({ type: "error", message: "Missing or invalid csvData." });
@@ -70,8 +84,21 @@ export async function POST(req: Request): Promise<Response> {
           controller.enqueue(ndjsonLine({ type: "thinking", turn: 0, text: event.message }));
         };
         const adapted = profile
-          ? await transformAndCategorise(csvData, profile, { onEvent: onAdaptEvent })
-          : await adaptCsv(csvData, { onEvent: onAdaptEvent });
+          ? await transformAndCategorise(csvData, profile, {
+              onEvent: onAdaptEvent,
+              knownMerchantMap,
+            })
+          : await adaptCsv(csvData, { onEvent: onAdaptEvent, knownMerchantMap });
+
+        if (adapted.merchantMap) {
+          controller.enqueue(
+            ndjsonLine({
+              type: "merchant_classification",
+              merchantMap: adapted.merchantMap,
+              newKeys: adapted.newMerchantKeys,
+            })
+          );
+        }
 
         await writeFile(tempPath, adapted.csv, "utf8");
 

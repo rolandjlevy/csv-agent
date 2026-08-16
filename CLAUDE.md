@@ -65,6 +65,12 @@ Implementation notes:
 
 ### 2. Saved merchant classifications — "remember how I categorise"
 
+**✅ Done — 2026-08-16** (`classifyMerchantsWithCache()` in `lib/csv-adapt.js`
+diffs unique merchant keys against a saved map and only classifies unknowns;
+CLI auto-persists newly learned merchants back into the `--profile` used;
+web adds `merchantMap` to `src/lib/saved-profiles.ts`, a `merchant_classification`
+stream event from `/api/agent`, and a review panel for manual reclassification).
+
 `classifyMerchants()` currently runs an LLM call on every session to
 sort merchants into the chart of accounts. For a recurring user, most
 merchants are the same every month. Save the classification map and
@@ -163,7 +169,7 @@ changes.
 2. **Saved profiles** (goal 1) — the smallest useful persistence
    feature; unlocks everything else. ✅ Done — 2026-08-14.
 3. **Saved merchant classifications** (goal 2) — depends on profiles
-   existing.
+   existing. ✅ Done — 2026-08-16.
 4. **Recipe flow** (goal 3) — combines 1 + 2 into a one-click
    pipeline.
 5. **Export formats** (goal 4) — independent of 1-3 technically, but

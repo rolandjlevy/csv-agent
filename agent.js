@@ -51,16 +51,23 @@ async function prepareCsv(filePath, { profileName, saveProfileName } = {}) {
       process.exit(1);
     }
     console.log(`📎 Using saved profile "${profileName}" (${profile.bankName || 'Unknown'}) — skipping detection.`);
-    result = await transformAndCategorise(raw, profile, { onEvent });
+    result = await transformAndCategorise(raw, profile, {
+      onEvent,
+      knownMerchantMap: profile.merchantMap || {},
+    });
+    if (result.newMerchantKeys.length > 0) {
+      profileStore.saveProfile(profileName, { ...profile, merchantMap: result.merchantMap });
+      console.log(`🧠 Learned ${result.newMerchantKeys.length} new merchant classification(s) — saved back to "${profileName}".`);
+    }
     if (saveProfileName) {
-      profileStore.saveProfile(saveProfileName, profile);
+      profileStore.saveProfile(saveProfileName, { ...profile, merchantMap: result.merchantMap });
       console.log(`💾 Also saved as "${saveProfileName}" (${profileStore.profilePath(saveProfileName)})`);
     }
   } else {
     result = await adaptCsv(raw, { onEvent });
     if (saveProfileName) {
       if (result.profile) {
-        profileStore.saveProfile(saveProfileName, result.profile);
+        profileStore.saveProfile(saveProfileName, { ...result.profile, merchantMap: result.merchantMap });
         console.log(`💾 Saved profile as "${saveProfileName}" (${profileStore.profilePath(saveProfileName)})`);
       } else {
         console.log(`ℹ️ File is already canonical — nothing detected to save as "${saveProfileName}".`);
