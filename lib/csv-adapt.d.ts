@@ -3,6 +3,10 @@ export type DateFormat = "DD/MM/YYYY" | "MM/DD/YYYY" | "YYYY-MM-DD";
 
 export interface AdaptProfile {
   headerRowIndex: number;
+  /** False when the file has no header row at all — column fields below are
+   * then 0-based column-index strings ("0", "1", ...) instead of header text.
+   * Defaults to true when absent. */
+  hasHeaderRow?: boolean;
   bankName?: string;
   currencyCode?: string;
   dateColumn: string;
@@ -20,12 +24,29 @@ export interface AdaptEvent {
   profile?: AdaptProfile;
 }
 
+/** What resolveProfile returns when it finds a saved recipe matching the
+ * freshly detected profile — adaptCsv uses this instead of the raw detection
+ * result, merging in its merchant map. */
+export interface ResolvedProfile {
+  profile: AdaptProfile;
+  merchantMap?: Record<string, string>;
+  name?: string;
+}
+
 export interface AdaptOptions {
   apiKey?: string;
   onEvent?: (event: AdaptEvent) => void | Promise<void>;
   /** Merchant key -> category, carried forward from a saved profile so only
    * unknown merchants are sent to the classifier. */
   knownMerchantMap?: Record<string, string>;
+  /** Called with the freshly detected profile (adaptCsv's own detect step,
+   * only — not invoked when a profile is already given, i.e. never from
+   * transformAndCategorise) so a caller can substitute a matching saved
+   * recipe's profile/merchant map instead of the raw detection. Return
+   * null/undefined to keep using the detected profile as-is. */
+  resolveProfile?: (
+    detected: AdaptProfile
+  ) => ResolvedProfile | null | undefined | Promise<ResolvedProfile | null | undefined>;
 }
 
 export interface AdaptResult {
