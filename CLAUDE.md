@@ -92,6 +92,13 @@ Implementation notes:
 
 ### 3. "Run last month's recipe" — one-click recurring pipeline
 
+**✅ Done — 2026-08-16** (two-tier matching — exact bank name, falling back
+to a column-layout fingerprint with guards against generic-header false
+positives and ambiguous matches — in `src/lib/saved-profiles.ts` and
+`lib/profile-store.js`; web shows a `RecipeBanner` in place of the confirm
+panel and auto-fires the P&L question via `runRecipe()`; the CLI gets the
+same benefit with zero flags via `adaptCsv()`'s new `resolveProfile` hook).
+
 Combine saved profile + saved merchant map into a **recipe**: drop a new
 CSV from the same bank, recipe auto-applies the profile and known
 classifications, flags new/unknown merchants for review, and produces
@@ -171,7 +178,7 @@ changes.
 3. **Saved merchant classifications** (goal 2) — depends on profiles
    existing. ✅ Done — 2026-08-16.
 4. **Recipe flow** (goal 3) — combines 1 + 2 into a one-click
-   pipeline.
+   pipeline. ✅ Done — 2026-08-16.
 5. **Export formats** (goal 4) — independent of 1-3 technically, but
    only valuable once the categorisation is reliable (i.e. after
    recipes work).
