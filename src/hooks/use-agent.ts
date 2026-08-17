@@ -38,6 +38,11 @@ interface MerchantClassificationEvent {
   newKeys: string[];
 }
 
+interface CanonicalDataEvent {
+  type: "canonical_data";
+  csv: string;
+}
+
 function parseCsvText(text: string): { columns: string[]; rows: CsvRow[] } {
   const result = Papa.parse<CsvRow>(text, { header: true, skipEmptyLines: true });
   if (result.errors.length > 0) {
@@ -74,6 +79,11 @@ export function useAgent() {
   // Merchants newly classified by the most recent question, surfaced for
   // the user to review/correct.
   const [newMerchants, setNewMerchants] = useState<{ key: string; category: string }[]>([]);
+  // The fully adapted+categorised canonical CSV from the most recent
+  // question's answer — the export panel's data source. Populated from the
+  // canonical_data event; the agent loop's own tool calls don't guarantee
+  // every row was fetched, so this can't be derived from `steps`.
+  const [canonicalCsv, setCanonicalCsv] = useState<string | null>(null);
 
   // Kept out of React state — only read inside askQuestion, and putting raw CSV
   // text / the confirmed profile in render state would buy nothing here.
@@ -253,7 +263,8 @@ export function useAgent() {
 
           for (const line of lines) {
             if (!line.trim()) continue;
-            const event: AgentEvent | MerchantClassificationEvent = JSON.parse(line);
+            const event: AgentEvent | MerchantClassificationEvent | CanonicalDataEvent =
+              JSON.parse(line);
 
             if (event.type === "merchant_classification") {
               if (activeProfileNameRef.current && event.newKeys.length > 0) {
@@ -264,6 +275,11 @@ export function useAgent() {
                   event.newKeys.map((k) => ({ key: k, category: event.merchantMap[k] }))
                 );
               }
+              continue;
+            }
+
+            if (event.type === "canonical_data") {
+              setCanonicalCsv(event.csv);
               continue;
             }
 
@@ -339,6 +355,7 @@ export function useAgent() {
     setSavedProfileMatch(null);
     setActiveProfileName(null);
     setNewMerchants([]);
+    setCanonicalCsv(null);
     setCsvInfo(null);
     setPreviewRows([]);
     setSteps([]);
@@ -364,6 +381,7 @@ export function useAgent() {
     savedProfileMatch,
     activeProfileName,
     newMerchants,
+    canonicalCsv,
     confirmProfile,
     uploadCsv,
     loadSample,

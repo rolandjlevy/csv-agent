@@ -29,7 +29,16 @@ interface MerchantClassificationEvent {
   newKeys: string[];
 }
 
-type StreamEvent = AgentEvent | MerchantClassificationEvent;
+// Carries the fully adapted+categorised canonical CSV back to the browser
+// once per question, so the export panel has the complete dataset to map
+// (the agent loop only ever sees whatever rows individual tool calls happen
+// to fetch, which isn't guaranteed to be everything).
+interface CanonicalDataEvent {
+  type: "canonical_data";
+  csv: string;
+}
+
+type StreamEvent = AgentEvent | MerchantClassificationEvent | CanonicalDataEvent;
 
 function ndjsonText(event: StreamEvent): string {
   return JSON.stringify(event) + "\n";
@@ -99,6 +108,8 @@ export async function POST(req: Request): Promise<Response> {
             })
           );
         }
+
+        controller.enqueue(ndjsonLine({ type: "canonical_data", csv: adapted.csv }));
 
         await writeFile(tempPath, adapted.csv, "utf8");
 
