@@ -12,6 +12,10 @@ export interface SavedProfile {
   name: string;
   profile: AdaptProfile;
   merchantMap?: Record<string, string>;
+  // Category -> target-system account code, keyed by export format
+  // ("xero", eventually "quickbooks"/"freeagent") so more formats can be
+  // added without a schema change.
+  accountCodes?: Record<string, Record<string, string>>;
   savedAt: string;
 }
 
@@ -35,8 +39,9 @@ export function listSavedProfiles(): SavedProfile[] {
 }
 
 // Saving under a name that already exists overwrites it — but carries its
-// merchantMap forward, so re-confirming a bank's column mapping doesn't wipe
-// out previously learned merchant classifications.
+// merchantMap and accountCodes forward, so re-confirming a bank's column
+// mapping doesn't wipe out previously learned merchant classifications or
+// account-code overrides.
 export function saveProfile(name: string, profile: AdaptProfile): void {
   const trimmed = name.trim();
   if (!trimmed) return;
@@ -47,6 +52,7 @@ export function saveProfile(name: string, profile: AdaptProfile): void {
     name: trimmed,
     profile,
     merchantMap: existing?.merchantMap,
+    accountCodes: existing?.accountCodes,
     savedAt: new Date().toISOString(),
   });
   writeAll(rest);
@@ -76,6 +82,32 @@ export function mergeMerchantMap(name: string, updates: Record<string, string>):
 // the corrected category).
 export function setMerchantOverride(name: string, merchant: string, category: string): void {
   mergeMerchantMap(name, { [merchant]: category });
+}
+
+// Category -> account code for a saved profile's given export format, or {}
+// if the profile/format has no overrides saved yet.
+export function getAccountCodes(name: string, format: string): Record<string, string> {
+  return readAll().find((p) => p.name === name)?.accountCodes?.[format] ?? {};
+}
+
+// Merges new/updated account-code overrides for one export format into a
+// saved profile. No-op if the profile doesn't exist.
+export function mergeAccountCodes(
+  name: string,
+  format: string,
+  updates: Record<string, string>
+): void {
+  const all = readAll();
+  const idx = all.findIndex((p) => p.name === name);
+  if (idx === -1) return;
+  all[idx] = {
+    ...all[idx],
+    accountCodes: {
+      ...all[idx].accountCodes,
+      [format]: { ...(all[idx].accountCodes?.[format] ?? {}), ...updates },
+    },
+  };
+  writeAll(all);
 }
 
 // Best-effort match for "was this bank's format saved before" — by bank

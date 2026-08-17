@@ -4,9 +4,15 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const readline = require('readline');
+const { parse } = require('csv-parse/sync');
 const { runAgentLoop } = require('./lib/agent-core');
 const { adaptCsv, transformAndCategorise } = require('./lib/csv-adapt');
 const profileStore = require('./lib/profile-store');
+const { toXeroCsv } = require('./lib/export/xero');
+const { XERO_ACCOUNT_CODES } = require('./lib/export/xero-accounts');
+
+const EXPORTERS = { xero: toXeroCsv };
+const DEFAULT_ACCOUNT_CODES = { xero: XERO_ACCOUNT_CODES };
 
 const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
@@ -40,6 +46,7 @@ async function prepareCsv(filePath, { profileName, saveProfileName } = {}) {
   const onEvent = (event) => console.log(`🧭 ${event.message}`);
 
   let result;
+  let resolvedProfileName = null; // whichever saved profile actually ended up in play, for --export's account-code lookup
   if (profileName) {
     let profile;
     try {
@@ -63,6 +70,7 @@ async function prepareCsv(filePath, { profileName, saveProfileName } = {}) {
       profileStore.saveProfile(saveProfileName, { ...profile, merchantMap: result.merchantMap });
       console.log(`💾 Also saved as "${saveProfileName}" (${profileStore.profilePath(saveProfileName)})`);
     }
+    resolvedProfileName = profileName;
   } else {
     // No --profile given — try to auto-match a previously saved recipe by
     // bank name or column layout before falling back to full detection. This
@@ -79,6 +87,7 @@ async function prepareCsv(filePath, { profileName, saveProfileName } = {}) {
         return { profile: match.profile, merchantMap: match.profile.merchantMap || {}, name: match.name };
       },
     });
+    resolvedProfileName = matchedName;
     if (matchedName && result.newMerchantKeys.length > 0) {
       profileStore.saveProfile(matchedName, { ...profileStore.loadProfile(matchedName), merchantMap: result.merchantMap });
       console.log(`🧠 Learned ${result.newMerchantKeys.length} new merchant classification(s) — saved back to "${matchedName}".`);
@@ -93,11 +102,55 @@ async function prepareCsv(filePath, { profileName, saveProfileName } = {}) {
     }
   }
 
-  if (result.skipped) return { runPath: filePath, currency: undefined };
+  if (result.skipped) return { runPath: filePath, currency: undefined, profileName: resolvedProfileName };
 
   const canonicalPath = path.join(os.tmpdir(), `csv-agent-canonical-${Date.now()}.csv`);
   fs.writeFileSync(canonicalPath, result.csv, 'utf8');
-  return { runPath: canonicalPath, currency: result.profile?.currencyCode };
+  return { runPath: canonicalPath, currency: result.profile?.currencyCode, profileName: resolvedProfileName };
+}
+
+// Adapts the file (same pipeline as a normal run) and writes it out in an
+// accounting-system CSV format instead of running the agent loop — no
+// question needed. Account codes come from the resolved recipe's
+// xeroAccountCodes (if any), merged over the format's built-in defaults;
+// any category still unmapped after that aborts WITHOUT writing a file,
+// listing exactly what needs mapping, rather than exporting blank codes.
+async function exportCsv(filePath, format, outPath, { profileName, saveProfileName }) {
+  const exporter = EXPORTERS[format];
+  if (!exporter) {
+    console.error(`❌ Unknown export format "${format}". Supported: ${Object.keys(EXPORTERS).join(', ')}.`);
+    process.exit(1);
+  }
+
+  const { runPath, profileName: resolvedProfileName } = await prepareCsv(filePath, {
+    profileName,
+    saveProfileName,
+  });
+
+  const rows = parse(fs.readFileSync(runPath, 'utf8'), { columns: true, skip_empty_lines: true });
+
+  let accountCodeMap = { ...DEFAULT_ACCOUNT_CODES[format] };
+  if (resolvedProfileName) {
+    const savedCodes = profileStore.loadProfile(resolvedProfileName).accountCodes?.[format];
+    if (savedCodes) accountCodeMap = { ...accountCodeMap, ...savedCodes };
+  }
+
+  const { csv, unmappedCategories, unmappedRowCount } = exporter(rows, accountCodeMap);
+
+  if (unmappedCategories.length > 0) {
+    console.error(
+      `❌ ${unmappedRowCount} row(s) have no ${format} account code mapped — nothing written.\n` +
+        `   Unmapped categories: ${unmappedCategories.join(', ')}\n` +
+        (resolvedProfileName
+          ? `   Add them to "accountCodes.${format}" in ${profileStore.profilePath(resolvedProfileName)} and re-run.`
+          : `   Save this file as a recipe first (--save-profile <name>), then add an "accountCodes.${format}" map to its profile JSON.`)
+    );
+    process.exit(1);
+  }
+
+  const resolvedOut = outPath || `${path.basename(filePath, path.extname(filePath))}-${format}.csv`;
+  fs.writeFileSync(resolvedOut, csv, 'utf8');
+  console.log(`💾 Exported ${rows.length} rows to ${format} format: ${resolvedOut}`);
 }
 
 // Prompts "Follow-up (press Enter to exit): " and resolves the trimmed
@@ -176,28 +229,43 @@ async function runAgent(filePath, question, { profileName, saveProfileName } = {
   }
 }
 
-// Pulls --profile/--save-profile flags out of argv, leaving the two
-// positional args (file, question) in the order they were given.
+// Pulls --profile/--save-profile/--export/--out flags out of argv, leaving
+// the positional args (file, and question — unless --export is given, in
+// which case no question is needed) in the order they were given.
 function parseArgs(argv) {
   const positional = [];
   let profileName;
   let saveProfileName;
+  let exportFormat;
+  let outPath;
 
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--profile') profileName = argv[++i];
     else if (argv[i] === '--save-profile') saveProfileName = argv[++i];
+    else if (argv[i] === '--export') exportFormat = argv[++i];
+    else if (argv[i] === '--out') outPath = argv[++i];
     else positional.push(argv[i]);
   }
 
-  return { filePath: positional[0], question: positional[1], profileName, saveProfileName };
+  return {
+    filePath: positional[0],
+    question: positional[1],
+    profileName,
+    saveProfileName,
+    exportFormat,
+    outPath,
+  };
 }
 
 function main() {
-  const { filePath, question, profileName, saveProfileName } = parseArgs(process.argv.slice(2));
+  const { filePath, question, profileName, saveProfileName, exportFormat, outPath } = parseArgs(
+    process.argv.slice(2)
+  );
 
-  if (!filePath || !question) {
+  if (!filePath || (!question && !exportFormat)) {
     console.error(
-      'Usage: node agent.js <csv-file> "<question>" [--profile <name>] [--save-profile <name>]'
+      'Usage: node agent.js <csv-file> "<question>" [--profile <name>] [--save-profile <name>]\n' +
+        '   or: node agent.js <csv-file> --export xero [--out <path>] [--profile <name>] [--save-profile <name>]'
     );
     process.exit(1);
   }
@@ -205,6 +273,14 @@ function main() {
   if (!process.env.ANTHROPIC_API_KEY) {
     console.error('Missing ANTHROPIC_API_KEY. Copy .env.example to .env and add your key.');
     process.exit(1);
+  }
+
+  if (exportFormat) {
+    exportCsv(filePath, exportFormat, outPath, { profileName, saveProfileName }).catch((error) => {
+      console.error('Export failed:', error);
+      process.exit(1);
+    });
+    return;
   }
 
   runAgent(filePath, question, { profileName, saveProfileName }).catch((error) => {

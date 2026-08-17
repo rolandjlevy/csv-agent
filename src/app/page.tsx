@@ -12,6 +12,7 @@ import { QuestionPanel } from "@/components/question-panel";
 import { AgentFeed } from "@/components/agent-feed";
 import { AnswerCard } from "@/components/answer-card";
 import { MerchantReviewPanel } from "@/components/merchant-review-panel";
+import { ExportPanel } from "@/components/export-panel";
 import { BenefitStrip } from "@/components/benefit-strip";
 import { HowItWorks } from "@/components/how-it-works";
 import { SecondaryFeatures } from "@/components/secondary-features";
@@ -145,6 +146,18 @@ export default function Home() {
                 merchants={agent.newMerchants}
                 onReclassify={agent.overrideMerchant}
                 profileName={agent.activeProfileName}
+              />
+            )}
+
+            {agent.status === "done" && agent.canonicalCsv && (
+              // key forces a fresh mount (fresh category list + fresh
+              // pre-filled defaults) whenever a new question's data arrives —
+              // this panel would otherwise persist stale categories/codes
+              // across "ask another question" without remounting.
+              <ExportPanel
+                key={agent.canonicalCsv}
+                canonicalCsv={agent.canonicalCsv}
+                activeProfileName={agent.activeProfileName}
               />
             )}
 
