@@ -1,9 +1,18 @@
 import { parse } from "csv-parse/sync";
 import { toXeroCsv, type ExportableRow } from "@lib/export/xero";
+import { toQuickBooksCsv } from "@lib/export/quickbooks";
+import { toFreeAgentCsv } from "@lib/export/freeagent";
 
 export const runtime = "nodejs";
 
-const EXPORTERS: Record<string, typeof toXeroCsv> = { xero: toXeroCsv };
+const EXPORTERS: Record<
+  string,
+  typeof toXeroCsv | typeof toQuickBooksCsv | typeof toFreeAgentCsv
+> = {
+  xero: toXeroCsv,
+  quickbooks: toQuickBooksCsv,
+  freeagent: toFreeAgentCsv,
+};
 
 interface ExportRequestBody {
   canonicalCsv?: unknown;
