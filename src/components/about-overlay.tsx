@@ -55,18 +55,22 @@ export function AboutOverlay() {
           About Statement Sorter
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-text-muted">
-          A minimal, real AI agent that takes a CSV file and a question, then
-          decides for itself which tools to call — and in what order — to
-          find the answer.
+          Statement Sorter takes any bank&rsquo;s CSV export — however messy the
+          layout — and turns it into a categorised P&amp;L ready to export into
+          Xero, QuickBooks or FreeAgent. Underneath, it&rsquo;s a real AI agent:
+          given a file and a question, it decides for itself which tools to call
+          and in what order, rather than following a fixed script.
         </p>
 
         <h2 className="mt-6 font-display text-lg font-bold text-text">
           About me
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-text-muted">
-          I&rsquo;m a full-stack developer specialising in front-end. I work
-          with JavaScript, React, Node, Express and MongoDB — see my other
-          projects on{' '}
+          I&rsquo;m a full-stack developer with a front-end focus, building
+          responsive, user-centric interfaces for complex, data-heavy products
+          in React and Next.js. I currently work at Cromwell, building features
+          end-to-end — from design through to deployment — on a large-scale
+          ecommerce platform with Node.js and AWS. See my other projects on{' '}
           <a
             href="https://github.com/rolandjlevy"
             target="_blank"
