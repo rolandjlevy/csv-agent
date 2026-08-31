@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { AboutProvider } from '@/components/about-context';
+import { AboutButton } from '@/components/about-button';
+import { Footer } from '@/components/footer';
 import './globals.css';
 
 const inter = Inter({
@@ -33,8 +36,14 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} font-sans antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <ThemeToggle />
-          {children}
+          <AboutProvider>
+            <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+              <AboutButton />
+              <ThemeToggle />
+            </div>
+            {children}
+            <Footer />
+          </AboutProvider>
         </ThemeProvider>
       </body>
     </html>

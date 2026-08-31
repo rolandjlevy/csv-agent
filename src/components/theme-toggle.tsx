@@ -28,7 +28,7 @@ export function ThemeToggle() {
             : 'Switch to dark mode'
           : 'Toggle theme'
       }
-      className="fixed top-4 right-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-bg-surface text-text-muted transition-colors hover:border-accent hover:text-accent"
+      className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-bg-surface text-text-muted transition-colors hover:border-accent hover:text-accent"
     >
       {mounted && (
         <svg
