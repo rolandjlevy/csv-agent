@@ -2,7 +2,7 @@ const STEPS = [
   { n: 1, title: "Drop the CSV", body: "any UK bank, any column layout" },
   { n: 2, title: "It works out the format", body: "dates, split money in/out columns, £ signs" },
   { n: 3, title: "Review the categorisation", body: "anything unclear is flagged, not guessed" },
-  { n: 4, title: "Get your categorised P&L", body: "Xero, QuickBooks & FreeAgent export on the way" },
+  { n: 4, title: "Get your categorised P&L", body: "Export straight to Xero, QuickBooks or FreeAgent" },
 ];
 
 export function HowItWorks() {

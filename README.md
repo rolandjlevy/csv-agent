@@ -70,9 +70,15 @@ lib/merchant.js        ← merchant-name normalisation shared by the classifier
 lib/agent-core.js      ← the loop itself (read this first) — shared by both versions
 tools.js               ← four tools, implemented as plain functions (no LLM calls
                           inside them): read_csv, analyse, generate_pl, write_report
+lib/export/            ← deterministic canonical-CSV → accounting-system CSV mappers,
+                          used after the loop finishes, never inside it:
+                          ├── xero.js / xero.d.ts / xero-accounts.js
+                          ├── quickbooks.js / quickbooks.d.ts / quickbooks-accounts.js
+                          └── freeagent.js / freeagent.d.ts / freeagent-accounts.js
 data/transactions.csv  ← sample UK bank transactions to query against
 
-agent.js               ← CLI entry point, wraps lib/agent-core.js with console output
+agent.js               ← CLI entry point, wraps lib/agent-core.js with console output;
+                          also handles --export <xero|quickbooks|freeagent> [--out <path>]
 
 src/                   ← Next.js web frontend
 ├── app/
@@ -80,11 +86,16 @@ src/                   ← Next.js web frontend
 │   └── api/
 │       ├── detect/route.ts← detects the adapt profile for an uploaded CSV (JSON)
 │       ├── agent/route.ts ← adapts the CSV then streams the same agent loop as NDJSON
+│       ├── export/route.ts← maps a canonical CSV to an accounting-system format (JSON)
 │       └── sample/route.ts← serves data/transactions.csv to the browser
 ├── components/             ← dropzone, csv preview, column-confirm panel, question chips,
-│                             agent feed, answer card, etc.
+│                             agent feed, answer card, export-panel.tsx, etc.
 ├── hooks/use-agent.ts      ← drives upload → detect → confirm → ask → stream client-side
 ├── lib/canonical-preview.ts← client mirror of the deterministic transform (live preview)
+├── lib/xero-accounts.ts, quickbooks-accounts.ts, freeagent-accounts.ts
+│                           ← client-safe copies of lib/export/*-accounts.js's default
+│                             tables, for the export panel's UI (never bundle the CJS
+│                             lib/export modules themselves into a "use client" component)
 └── types/agent.ts
 ```
 
