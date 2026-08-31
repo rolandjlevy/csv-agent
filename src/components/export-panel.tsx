@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
 import { DEFAULT_XERO_ACCOUNT_CODES } from "@/lib/xero-accounts";
 import { DEFAULT_QUICKBOOKS_ACCOUNT_NAMES } from "@/lib/quickbooks-accounts";
+import { DEFAULT_FREEAGENT_ACCOUNT_NAMES } from "@/lib/freeagent-accounts";
 import { getAccountCodes, mergeAccountCodes } from "@/lib/saved-profiles";
 
 interface ExportPanelProps {
@@ -11,7 +12,7 @@ interface ExportPanelProps {
   activeProfileName: string | null;
 }
 
-type Format = "xero" | "quickbooks";
+type Format = "xero" | "quickbooks" | "freeagent";
 
 interface FormatConfig {
   label: string;
@@ -40,6 +41,13 @@ const FORMAT_CONFIG: Record<Format, FormatConfig> = {
     defaults: DEFAULT_QUICKBOOKS_ACCOUNT_NAMES,
     supportsCoding: false,
     note: "QuickBooks Online's CSV import has no account field — rows land in \"For Review\" for you to categorise by hand. Suggested category names:",
+  },
+  freeagent: {
+    label: "FreeAgent",
+    filename: "freeagent-import.csv",
+    defaults: DEFAULT_FREEAGENT_ACCOUNT_NAMES,
+    supportsCoding: false,
+    note: "FreeAgent's bank-statement CSV import has no account field — you'll categorise each row afterward in \"Explain transaction\". Suggested category names:",
   },
 };
 

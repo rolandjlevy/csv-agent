@@ -116,13 +116,35 @@ UX flow:
 
 ### 4. Export to accounting-system format
 
-After the P&L is generated (or after categorisation), let the user
+**✅ Done — Xero: 2026-08-17, QuickBooks Online & FreeAgent: 2026-08-31**
+(`lib/export/{xero,quickbooks,freeagent}.js` + matching `-accounts.js`
+default tables; CLI `--export <format> [--out <path>]` in `agent.js`;
+web `src/app/api/export/route.ts` + a format-selectable
+`src/components/export-panel.tsx`.)
+
+After the P&L is generated (or after categorisation), the user can
 export in a format their accounting software accepts directly:
 
 - **Xero CSV import** format (Date, Amount, Payee, Description,
-  Reference, Account Code — Xero's own template)
-- **QuickBooks IIF** or QuickBooks Online CSV format
-- **FreeAgent CSV import** format
+  Reference, Account Code — Xero's own "precoded bank statement"
+  template). Account codes are numeric and configurable per recipe
+  (`SavedProfile.accountCodes.xero`); unmapped categories block the
+  download rather than exporting a blank code.
+- **QuickBooks Online CSV** format — shipped as the native
+  "Banking → Upload from file" bank-transaction CSV (Date, Description,
+  Amount; dates converted to ISO `YYYY-MM-DD`), **not** desktop IIF.
+  Researched finding worth recording so it isn't re-litigated: this
+  native import path has **no account/category field at all** — rows
+  land in QBO's "For Review" tab for manual/rule-based coding
+  afterward. `toQuickbooksCsv()` therefore never blocks a download;
+  `lib/export/quickbooks-accounts.js` is a read-only category-name
+  reference shown in the UI, not something the export writes.
+- **FreeAgent CSV import** format — three columns, fixed order
+  (Date, Amount, Description), **no header row** (FreeAgent's own docs
+  require this). Also has **no account/category field** on import —
+  coding happens per-line afterward in FreeAgent's "Explain
+  transaction" screen — so `toFreeAgentCsv()` behaves the same
+  never-blocks way as the QuickBooks exporter.
 
 This is the conversion trigger — the moment a free tool becomes worth
 paying for. A bookkeeper who can go from "raw Monzo export" to
@@ -133,15 +155,14 @@ Implementation notes:
 - Each export format is a deterministic mapping from the canonical
   schema + chart-of-accounts categories to the target system's expected
   columns. No LLM needed — pure JS transformation.
-- Start with Xero (most common among UK bookkeepers using cloud
-  accounting). Add QuickBooks and FreeAgent as separate export
-  functions.
 - The account-code mapping (Xero account codes are numeric, e.g.
-  "200" for Sales, "429" for General Expenses) should be configurable
-  per recipe — different clients may use different Xero chart
-  structures.
-- Export button on the answer card / P&L view: "Download for Xero",
-  "Download for QuickBooks".
+  "200" for Sales, "429" for General Expenses) is configurable per
+  recipe — different clients may use different Xero chart structures.
+  QuickBooks/FreeAgent have no equivalent field to configure (see
+  above), so their `-accounts.js` tables map to category *names* for
+  reference only.
+- Export panel on the answer card / P&L view has a format selector
+  ("Xero" / "QuickBooks" / "FreeAgent"), each downloading its own file.
 
 ### 5. Messy sample data — show off the adaptation layer
 
@@ -181,7 +202,8 @@ changes.
    pipeline. ✅ Done — 2026-08-16.
 5. **Export formats** (goal 4) — independent of 1-3 technically, but
    only valuable once the categorisation is reliable (i.e. after
-   recipes work).
+   recipes work). ✅ Done — Xero: 2026-08-17, QuickBooks Online &
+   FreeAgent: 2026-08-31.
 
 Do them in this order. Each goal should be a separate commit (or PR)
 that works independently — don't build goals 1-4 as one giant change.

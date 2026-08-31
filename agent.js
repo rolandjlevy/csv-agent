@@ -12,11 +12,14 @@ const { toXeroCsv } = require('./lib/export/xero');
 const { XERO_ACCOUNT_CODES } = require('./lib/export/xero-accounts');
 const { toQuickbooksCsv } = require('./lib/export/quickbooks');
 const { QUICKBOOKS_ACCOUNT_NAMES } = require('./lib/export/quickbooks-accounts');
+const { toFreeAgentCsv } = require('./lib/export/freeagent');
+const { FREEAGENT_ACCOUNT_NAMES } = require('./lib/export/freeagent-accounts');
 
-const EXPORTERS = { xero: toXeroCsv, quickbooks: toQuickbooksCsv };
+const EXPORTERS = { xero: toXeroCsv, quickbooks: toQuickbooksCsv, freeagent: toFreeAgentCsv };
 const DEFAULT_ACCOUNT_CODES = {
   xero: XERO_ACCOUNT_CODES,
   quickbooks: QUICKBOOKS_ACCOUNT_NAMES,
+  freeagent: FREEAGENT_ACCOUNT_NAMES,
 };
 
 const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -270,7 +273,7 @@ function main() {
   if (!filePath || (!question && !exportFormat)) {
     console.error(
       'Usage: node agent.js <csv-file> "<question>" [--profile <name>] [--save-profile <name>]\n' +
-        '   or: node agent.js <csv-file> --export <xero|quickbooks> [--out <path>] [--profile <name>] [--save-profile <name>]'
+        '   or: node agent.js <csv-file> --export <xero|quickbooks|freeagent> [--out <path>] [--profile <name>] [--save-profile <name>]'
     );
     process.exit(1);
   }
