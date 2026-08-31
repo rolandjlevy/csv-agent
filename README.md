@@ -1,4 +1,4 @@
-# 📄 CSV Agent
+# 📄 Statement Sorter
 
 A minimal, real AI agent which takes a CSV file and a question, then
 decides for itself which tools to call — and in what order — to find
