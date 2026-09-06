@@ -67,20 +67,6 @@ body {
   color: var(--color-text);
 }
 
-@keyframes dropzone-pulse {
-  0%,
-  100% {
-    border-color: var(--color-border);
-  }
-  50% {
-    border-color: var(--color-accent);
-  }
-}
-
-.dropzone-idle:hover {
-  animation: dropzone-pulse 0.3s ease-in-out infinite;
-}
-
 @keyframes tool-pulse {
   0%,
   100% {

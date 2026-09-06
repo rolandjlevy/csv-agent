@@ -21,12 +21,12 @@ export function Header() {
         </h1>
       </div>
       <p className="mt-1 text-base font-medium text-text sm:text-lg">
-        Stop reformatting your clients&rsquo; bank exports every month.
+        See exactly where your money goes each month
       </p>
 
       <p className="mt-3 max-w-xl text-xs leading-relaxed text-text-muted sm:text-sm">
-        Drop the CSV — any bank, any layout. Statement Sorter reads the file, sorts your
-        transactions into clear{' '}
+        Drop the CSV — any bank, any layout. Statement Sorter reads the file,
+        sorts your transactions into clear{' '}
         <Term detail="Income, cost of sales and overheads — not just a pile of categorised rows.">
           categories
         </Term>

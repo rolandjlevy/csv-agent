@@ -1,18 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import Papa from "papaparse";
-import { DEFAULT_XERO_ACCOUNT_CODES } from "@/lib/xero-accounts";
-import { DEFAULT_QUICKBOOKS_ACCOUNT_NAMES } from "@/lib/quickbooks-accounts";
-import { DEFAULT_FREEAGENT_ACCOUNT_NAMES } from "@/lib/freeagent-accounts";
-import { getAccountCodes, mergeAccountCodes } from "@/lib/saved-profiles";
+import { useEffect, useMemo, useState } from 'react';
+import Papa from 'papaparse';
+import { DEFAULT_XERO_ACCOUNT_CODES } from '@/lib/xero-accounts';
+import { DEFAULT_QUICKBOOKS_ACCOUNT_NAMES } from '@/lib/quickbooks-accounts';
+import { DEFAULT_FREEAGENT_ACCOUNT_NAMES } from '@/lib/freeagent-accounts';
+import { getAccountCodes, mergeAccountCodes } from '@/lib/saved-profiles';
+import { Term } from '@/components/term';
 
 interface ExportPanelProps {
   canonicalCsv: string | null;
   activeProfileName: string | null;
 }
 
-type Format = "xero" | "quickbooks" | "freeagent";
+type Format = 'xero' | 'quickbooks' | 'freeagent';
 
 interface FormatConfig {
   label: string;
@@ -29,40 +30,40 @@ interface FormatConfig {
 }
 
 const FORMAT_CONFIG: Record<Format, FormatConfig> = {
-  xero: {
-    label: "Xero",
-    filename: "xero-import.csv",
-    defaults: DEFAULT_XERO_ACCOUNT_CODES,
-    supportsCoding: true,
-  },
   quickbooks: {
-    label: "QuickBooks",
-    filename: "quickbooks-import.csv",
+    label: 'QuickBooks',
+    filename: 'quickbooks-import.csv',
     defaults: DEFAULT_QUICKBOOKS_ACCOUNT_NAMES,
     supportsCoding: false,
-    note: "QuickBooks Online's CSV import has no account field — rows land in \"For Review\" for you to categorise by hand. Suggested category names:",
+    note: 'QuickBooks Online\'s CSV import has no account field — rows land in "For Review" for you to categorise by hand. Suggested category names:',
   },
   freeagent: {
-    label: "FreeAgent",
-    filename: "freeagent-import.csv",
+    label: 'FreeAgent',
+    filename: 'freeagent-import.csv',
     defaults: DEFAULT_FREEAGENT_ACCOUNT_NAMES,
     supportsCoding: false,
-    note: "FreeAgent's bank-statement CSV import has no account field — you'll categorise each row afterward in \"Explain transaction\". Suggested category names:",
+    note: 'FreeAgent\'s bank-statement CSV import has no account field — you\'ll categorise each row afterward in "Explain transaction". Suggested category names:',
+  },
+  xero: {
+    label: 'Xero',
+    filename: 'xero-import.csv',
+    defaults: DEFAULT_XERO_ACCOUNT_CODES,
+    supportsCoding: true,
   },
 };
 
 const FORMATS = Object.keys(FORMAT_CONFIG) as Format[];
 
 const inputClass =
-  "w-24 rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text focus:border-accent focus:outline-none";
+  'w-24 rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text focus:border-accent focus:outline-none';
 
 // Triggers a browser download of a CSV string with no server round-trip for
 // the file itself (the mapping already happened server-side; this just
 // saves the response).
 function downloadCsv(csv: string, filename: string) {
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
   a.download = filename;
   a.click();
@@ -76,22 +77,29 @@ function downloadCsv(csv: string, filename: string) {
 // block the download until filled in, rather than exporting silently
 // blank. Formats with no pre-coding concept (QuickBooks, FreeAgent) show a
 // read-only reference list instead and never block the download.
-export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProps) {
+export function ExportPanel({
+  canonicalCsv,
+  activeProfileName,
+}: ExportPanelProps) {
   const categories = useMemo(() => {
     if (!canonicalCsv) return [];
     const { data } = Papa.parse<{ Category?: string }>(canonicalCsv, {
       header: true,
       skipEmptyLines: true,
     });
-    return Array.from(new Set(data.map((r) => r.Category).filter((c): c is string => Boolean(c)))).sort();
+    return Array.from(
+      new Set(
+        data.map((r) => r.Category).filter((c): c is string => Boolean(c)),
+      ),
+    ).sort();
   }, [canonicalCsv]);
 
-  const [format, setFormat] = useState<Format>("xero");
+  const [format, setFormat] = useState<Format>('quickbooks');
   const config = FORMAT_CONFIG[format];
 
   const savedCodes = useMemo(
     () => (activeProfileName ? getAccountCodes(activeProfileName, format) : {}),
-    [activeProfileName, format]
+    [activeProfileName, format],
   );
 
   const [codes, setCodes] = useState<Record<string, string>>({});
@@ -102,7 +110,8 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
   useEffect(() => {
     const initial: Record<string, string> = {};
     for (const category of categories) {
-      initial[category] = savedCodes[category] ?? config.defaults[category] ?? "";
+      initial[category] =
+        savedCodes[category] ?? config.defaults[category] ?? '';
     }
     setCodes(initial);
   }, [format, categories, savedCodes, config.defaults]);
@@ -119,26 +128,34 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
     }
   };
 
-  const unmapped = config.supportsCoding ? categories.filter((c) => !codes[c]?.trim()) : [];
+  const unmapped = config.supportsCoding
+    ? categories.filter((c) => !codes[c]?.trim())
+    : [];
   const canDownload = unmapped.length === 0 && !downloading;
 
   const handleDownload = async () => {
     setDownloading(true);
     setDownloadError(null);
     try {
-      const response = await fetch("/api/export", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ canonicalCsv, format, accountCodeMap: config.supportsCoding ? codes : {} }),
+      const response = await fetch('/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          canonicalCsv,
+          format,
+          accountCodeMap: config.supportsCoding ? codes : {},
+        }),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? "Export failed.");
+      if (!response.ok) throw new Error(data.error ?? 'Export failed.');
       if (data.unmappedCategories?.length > 0) {
-        throw new Error(`Still missing a code for: ${data.unmappedCategories.join(", ")}`);
+        throw new Error(
+          `Still missing a code for: ${data.unmappedCategories.join(', ')}`,
+        );
       }
       downloadCsv(data.csv, config.filename);
     } catch (err) {
-      setDownloadError(err instanceof Error ? err.message : "Export failed.");
+      setDownloadError(err instanceof Error ? err.message : 'Export failed.');
     } finally {
       setDownloading(false);
     }
@@ -150,7 +167,10 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
         <p className="text-sm font-medium text-text">
           📤 Export
           {activeProfileName && config.supportsCoding && (
-            <span className="font-normal text-text-faint"> — codes save to your &ldquo;{activeProfileName}&rdquo; recipe</span>
+            <span className="font-normal text-text-faint">
+              {' '}
+              — codes save to your &ldquo;{activeProfileName}&rdquo; recipe
+            </span>
           )}
         </p>
         <div className="flex rounded-lg border border-border-subtle p-0.5">
@@ -160,7 +180,9 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
               type="button"
               onClick={() => setFormat(f)}
               className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                format === f ? "bg-accent text-bg" : "text-text-muted hover:text-text"
+                format === f
+                  ? 'bg-accent text-bg'
+                  : 'text-text-muted hover:text-text'
               }`}
             >
               {FORMAT_CONFIG[f].label}
@@ -172,13 +194,18 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
       {config.supportsCoding ? (
         <ul className="flex flex-col gap-2">
           {categories.map((category) => (
-            <li key={category} className="flex items-center justify-between gap-3">
-              <span className="truncate text-xs text-text-muted">{category}</span>
+            <li
+              key={category}
+              className="flex items-center justify-between gap-3"
+            >
+              <span className="truncate text-xs text-text-muted">
+                {category}
+              </span>
               <input
                 type="text"
-                className={`${inputClass} ${!codes[category]?.trim() ? "border-error/50" : ""}`}
+                className={`${inputClass} ${!codes[category]?.trim() ? 'border-error/50' : ''}`}
                 placeholder="code"
-                value={codes[category] ?? ""}
+                value={codes[category] ?? ''}
                 onChange={(e) => setCode(category, e.target.value)}
               />
             </li>
@@ -186,12 +213,21 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
         </ul>
       ) : (
         <div className="flex flex-col gap-2">
-          {config.note && <p className="text-xs text-text-faint">{config.note}</p>}
+          {config.note && (
+            <p className="text-xs text-text-faint">{config.note}</p>
+          )}
           <ul className="flex flex-col gap-2">
             {categories.map((category) => (
-              <li key={category} className="flex items-center justify-between gap-3">
-                <span className="truncate text-xs text-text-muted">{category}</span>
-                <span className="text-xs text-text-faint">{config.defaults[category] ?? "—"}</span>
+              <li
+                key={category}
+                className="flex items-center justify-between gap-3"
+              >
+                <span className="truncate text-xs text-text-muted">
+                  {category}
+                </span>
+                <span className="text-xs text-text-faint">
+                  {config.defaults[category] ?? '—'}
+                </span>
               </li>
             ))}
           </ul>
@@ -200,7 +236,13 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
 
       {config.supportsCoding && unmapped.length > 0 && (
         <p className="text-xs text-error">
-          Add an account code for: {unmapped.join(", ")} before downloading.
+          Add an{' '}
+          <Term
+            detail={`These post to your own control accounts in ${config.label} — accounts specific to your organisation, like your VAT control account or director's loan account. Find the code under your ${config.label} Chart of Accounts, then enter it above.`}
+          >
+            account code
+          </Term>{' '}
+          for: {unmapped.join(', ')} before downloading.
         </p>
       )}
       {downloadError && <p className="text-xs text-error">{downloadError}</p>}
@@ -211,7 +253,7 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
         disabled={!canDownload}
         className="self-start rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {downloading ? "Preparing…" : `Download for ${config.label}`}
+        {downloading ? 'Preparing…' : `Download for ${config.label}`}
       </button>
     </div>
   );

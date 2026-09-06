@@ -40,6 +40,19 @@ export default function Home() {
     setRecipeDismissed(false);
   }, [agent.savedProfileMatch]);
 
+  const [showExport, setShowExport] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setShowExport(false);
+  }, [agent.canonicalCsv]);
+
+  useEffect(() => {
+    if (showExport) {
+      exportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [showExport]);
+
   const isUploadState = agent.status === "idle" || agent.status === "uploading";
   const isConfirmState = agent.status === "confirming";
   const isAskState = agent.status === "ready";
@@ -149,18 +162,6 @@ export default function Home() {
               />
             )}
 
-            {agent.status === "done" && agent.canonicalCsv && (
-              // key forces a fresh mount (fresh category list + fresh
-              // pre-filled defaults) whenever a new question's data arrives —
-              // this panel would otherwise persist stale categories/codes
-              // across "ask another question" without remounting.
-              <ExportPanel
-                key={agent.canonicalCsv}
-                canonicalCsv={agent.canonicalCsv}
-                activeProfileName={agent.activeProfileName}
-              />
-            )}
-
             {agent.error && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
@@ -172,13 +173,44 @@ export default function Home() {
             )}
 
             {(agent.status === "done" || agent.status === "error") && (
-              <button
-                type="button"
-                onClick={agent.askAnother}
-                className="self-start rounded-lg border border-border px-4 py-2 text-sm text-text-muted transition-colors hover:border-accent hover:text-accent"
-              >
-                Ask another question
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={agent.askAnother}
+                  className="self-start rounded-lg border border-border px-4 py-2 text-sm text-text-muted transition-colors hover:border-accent hover:text-accent"
+                >
+                  Ask another question
+                </button>
+
+                {agent.status === "done" && agent.canonicalCsv && (
+                  <button
+                    type="button"
+                    onClick={() => setShowExport((v) => !v)}
+                    aria-expanded={showExport}
+                    className={`self-start rounded-lg border px-4 py-2 text-sm transition-colors ${
+                      showExport
+                        ? "border-accent text-accent"
+                        : "border-border text-text-muted hover:border-accent hover:text-accent"
+                    }`}
+                  >
+                    Export
+                  </button>
+                )}
+              </div>
+            )}
+
+            {showExport && agent.status === "done" && agent.canonicalCsv && (
+              <div ref={exportRef}>
+                {/* key forces a fresh mount (fresh category list + fresh
+                pre-filled defaults) whenever a new question's data arrives —
+                this panel would otherwise persist stale categories/codes
+                across "ask another question" without remounting. */}
+                <ExportPanel
+                  key={agent.canonicalCsv}
+                  canonicalCsv={agent.canonicalCsv}
+                  activeProfileName={agent.activeProfileName}
+                />
+              </div>
             )}
 
             <div ref={feedEndRef} />
