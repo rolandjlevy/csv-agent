@@ -63,8 +63,8 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
     <div className="flex w-full max-w-xl flex-col items-center gap-6 px-4">
       <div
         {...getRootProps()}
-        className={`dropzone-idle w-full cursor-pointer rounded-xl border-2 border-dashed bg-accent-muted transition-colors ${
-          isDragActive ? "border-accent bg-accent/20" : "border-border"
+        className={`dropzone-idle w-full cursor-pointer rounded-xl border-2 border-dashed bg-accent-muted transition-colors duration-300 ${
+          isDragActive ? "border-accent bg-accent/20" : "border-border hover:border-accent"
         } ${isLoading ? "pointer-events-none opacity-60" : ""}`}
       >
         <input {...getInputProps()} disabled={isLoading} />
