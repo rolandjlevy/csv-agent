@@ -61,31 +61,10 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
 
   return (
     <div className="flex w-full max-w-xl flex-col items-center gap-6 px-4">
-      <div className="flex w-full flex-col items-center gap-3 rounded-xl border border-accent/40 bg-accent-muted px-6 py-8 text-center">
-        <p className="text-sm font-medium text-text">Haven&rsquo;t got a file handy?</p>
-        <button
-          type="button"
-          onClick={() => handleSampleClick("messy")}
-          disabled={isLoading}
-          className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          ✨ Try it with a genuinely messy bank export
-        </button>
-        <p className="text-xs text-text-faint">
-          Watch it untangle the columns, strip the £ signs, and sort everything out.
-        </p>
-      </div>
-
-      <div className="flex w-full items-center gap-3 text-xs text-text-faint">
-        <span className="h-px flex-1 bg-border-subtle" />
-        or drop your own
-        <span className="h-px flex-1 bg-border-subtle" />
-      </div>
-
       <div
         {...getRootProps()}
-        className={`dropzone-idle w-full cursor-pointer rounded-xl border-2 border-dashed transition-colors ${
-          isDragActive ? "border-accent bg-accent-muted" : "border-border bg-bg-surface"
+        className={`dropzone-idle w-full cursor-pointer rounded-xl border-2 border-dashed bg-accent-muted transition-colors ${
+          isDragActive ? "border-accent bg-accent/20" : "border-border"
         } ${isLoading ? "pointer-events-none opacity-60" : ""}`}
       >
         <input {...getInputProps()} disabled={isLoading} />
@@ -112,7 +91,7 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
               fill="none"
               stroke="currentColor"
               strokeWidth="1.5"
-              className={isDragActive ? "text-accent" : "text-text-faint"}
+              className="text-accent"
             >
               <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
               <path d="M14 3v6h6" />
@@ -129,6 +108,27 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
           </p>
           <p className="text-xs text-text-faint">.csv or .tsv · max 5MB</p>
         </motion.div>
+      </div>
+
+      <div className="flex w-full items-center gap-3 text-xs text-text-faint">
+        <span className="h-px flex-1 bg-border-subtle" />
+        or need a sample instead?
+        <span className="h-px flex-1 bg-border-subtle" />
+      </div>
+
+      <div className="flex w-full flex-col items-center gap-3 rounded-xl border border-border bg-bg-surface px-6 py-8 text-center">
+        <p className="text-sm font-medium text-text">Haven&rsquo;t got a file handy?</p>
+        <button
+          type="button"
+          onClick={() => handleSampleClick("messy")}
+          disabled={isLoading}
+          className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          ✨ Try it with a genuinely messy bank export
+        </button>
+        <p className="text-xs text-text-faint">
+          Watch it untangle the columns, strip the £ signs, and sort everything out.
+        </p>
       </div>
 
       {localError && <p className="text-sm text-error">{localError}</p>}

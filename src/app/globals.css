@@ -73,12 +73,12 @@ body {
     border-color: var(--color-border);
   }
   50% {
-    border-color: var(--color-text-faint);
+    border-color: var(--color-accent);
   }
 }
 
 .dropzone-idle:hover {
-  animation: dropzone-pulse 1.8s ease-in-out infinite;
+  animation: dropzone-pulse 0.3s ease-in-out infinite;
 }
 
 @keyframes tool-pulse {
