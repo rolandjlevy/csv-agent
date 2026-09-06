@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Papa from "papaparse";
 import { DEFAULT_XERO_ACCOUNT_CODES } from "@/lib/xero-accounts";
 import { DEFAULT_QUICKBOOKS_ACCOUNT_NAMES } from "@/lib/quickbooks-accounts";
@@ -75,8 +75,8 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
   );
 
   const [codes, setCodes] = useState<Record<string, string>>(() => {
-    const initial: Record<string, string> = {};
     const defaults = getDefaultCodes(format);
+    const initial: Record<string, string> = {};
     for (const category of categories) {
       initial[category] = savedCodes[category] ?? defaults[category] ?? "";
     }
@@ -84,6 +84,19 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
   });
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  // Recompute codes whenever the file, the category set, or the selected
+  // format changes — each format has its own default/saved code per
+  // category, so switching format (or loading a new file) must not carry
+  // over the previous format's values.
+  useEffect(() => {
+    const defaults = getDefaultCodes(format);
+    const initial: Record<string, string> = {};
+    for (const category of categories) {
+      initial[category] = savedCodes[category] ?? defaults[category] ?? "";
+    }
+    setCodes(initial);
+  }, [format, categories, savedCodes]);
 
   if (!canonicalCsv || categories.length === 0) return null;
 
@@ -120,16 +133,6 @@ export function ExportPanel({ canonicalCsv, activeProfileName }: ExportPanelProp
       setDownloading(false);
     }
   };
-
-  // Reset codes when format changes
-  const defaults = getDefaultCodes(format);
-  useMemo(() => {
-    const initial: Record<string, string> = {};
-    for (const category of categories) {
-      initial[category] = savedCodes[category] ?? defaults[category] ?? "";
-    }
-    setCodes(initial);
-  }, [format, categories, savedCodes, defaults]);
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-bg-surface p-4">
