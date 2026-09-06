@@ -7,6 +7,7 @@
 // no event handler needed, so no "use client" needed either.
 export function HomeButton() {
   return (
+    // eslint-disable-next-line @next/next/no-html-link-for-pages -- intentional: a plain <a> forces the full reload described above; next/link would do client-side routing instead.
     <a
       href="/"
       aria-label="Go to homepage"
