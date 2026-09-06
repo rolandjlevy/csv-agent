@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { AboutProvider } from '@/components/about-context';
 import { AboutButton } from '@/components/about-button';
+import { HomeButton } from '@/components/home-button';
 import { Footer } from '@/components/footer';
 import './globals.css';
 
@@ -24,7 +25,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: 'Statement Sorter',
-  description: "Stop reformatting your clients' bank exports every month.",
+  description: 'See exactly where your money goes each month',
 };
 
 export default function RootLayout({
@@ -35,8 +36,15 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} font-sans antialiased`}
       >
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+        >
           <AboutProvider>
+            <div className="fixed top-4 left-4 z-50">
+              <HomeButton />
+            </div>
             <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
               <AboutButton />
               <ThemeToggle />
