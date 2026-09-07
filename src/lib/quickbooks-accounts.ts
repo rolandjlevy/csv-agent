@@ -8,6 +8,11 @@
 // informational in the UI (QBO's native CSV import has no account field to
 // actually populate) — keep in sync with
 // lib/export/quickbooks-accounts.js's QUICKBOOKS_ACCOUNT_NAMES.
+//
+// NOTE (2026-09-07): see lib/export/quickbooks-accounts.js's header — this
+// table's sourcing predates Intuit's 2024 QuickBooks Self-Employed ->
+// Sole Trader/Simple Start transition and is due a refresh, not verified
+// against the current product.
 export const DEFAULT_QUICKBOOKS_ACCOUNT_NAMES: Record<string, string | null> = {
   "Sales / Revenue": "Sales",
   "Other Income": "Other income",
