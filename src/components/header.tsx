@@ -1,4 +1,5 @@
 import { Term } from '@/components/term';
+import { AboutLink } from '@/components/about-link';
 import { SITE } from '@/lib/site';
 
 export function Header() {
@@ -43,15 +44,7 @@ export function Header() {
 
       <p className="mt-3 text-sm text-text-muted">
         A working demo of an AI agent, built by{' '}
-        <a
-          href={SITE.portfolio}
-          target="_blank"
-          rel="noreferrer"
-          className="text-accent underline underline-offset-4"
-        >
-          {SITE.maker}
-        </a>
-        .
+        <AboutLink>{SITE.maker}</AboutLink>.
       </p>
     </header>
   );

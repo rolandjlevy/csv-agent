@@ -66,7 +66,7 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
           type="button"
           onClick={() => handleSampleClick("messy")}
           disabled={isLoading}
-          className="min-h-12 w-full rounded-full bg-accent px-6 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="min-h-12 w-full cursor-pointer rounded-full bg-accent px-6 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-50"
         >
           Try it with a messy bank export
         </button>
@@ -77,7 +77,7 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
           type="button"
           onClick={() => handleSampleClick("clean")}
           disabled={isLoading}
-          className="min-h-11 px-3 text-sm text-text-muted underline-offset-4 hover:text-text hover:underline disabled:opacity-50"
+          className="min-h-11 cursor-pointer px-3 text-sm text-text-muted underline-offset-4 hover:text-text hover:underline disabled:cursor-default disabled:opacity-50"
         >
           Or try the clean sample
         </button>
