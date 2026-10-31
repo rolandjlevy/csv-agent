@@ -16,6 +16,7 @@ const BENEFITS = [
 export function BenefitStrip() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:py-8">
+      <h2 className="sr-only">What it does</h2>
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-8">
         {BENEFITS.map((b) => (
           <li key={b.title} className="flex flex-col gap-1 text-left sm:gap-2">
