@@ -15,8 +15,8 @@ export function Footer() {
         Built by {SITE.maker}. &copy; 2026 {SITE.name}.
       </p>
       <nav aria-label="Footer" className="mt-1 flex flex-wrap items-center justify-center">
-        <a href={SITE.github} target="_blank" rel="noreferrer" className={linkClass}>
-          GitHub
+        <a href={SITE.repo} target="_blank" rel="noreferrer" className={linkClass}>
+          Source code
         </a>
         <a href={SITE.linkedin} target="_blank" rel="noreferrer" className={linkClass}>
           LinkedIn
