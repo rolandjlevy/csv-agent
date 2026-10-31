@@ -61,6 +61,23 @@ export default function PrivacyPage() {
         your browser data removes them.
       </p>
 
+      <h2 className="mt-8 text-lg font-semibold">Visit statistics</h2>
+      <p className="mt-2 text-sm leading-relaxed text-text-muted">
+        This site uses Vercel Web Analytics and Vercel Speed Insights to count
+        visits and measure how fast pages load. Vercel says Web Analytics
+        doesn&rsquo;t use cookies and only stores anonymised data. Your files, file
+        names and questions are not sent to them. See{' '}
+        <a
+          href="https://vercel.com/docs/analytics/privacy-policy"
+          target="_blank"
+          rel="noreferrer"
+          className={linkClass}
+        >
+          Vercel&rsquo;s analytics privacy page
+        </a>
+        .
+      </p>
+
       <h2 className="mt-8 text-lg font-semibold">Questions</h2>
       <p className="mt-2 text-sm leading-relaxed text-text-muted">
         Ask {SITE.maker} at{' '}
