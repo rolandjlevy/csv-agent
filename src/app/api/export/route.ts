@@ -43,12 +43,33 @@ export async function POST(req: Request): Promise<Response> {
       { status: 400 }
     );
   }
-  const codes: Record<string, string> =
-    accountCodeMap && typeof accountCodeMap === "object" ? (accountCodeMap as Record<string, string>) : {};
+  // Own string values only, on an object with no prototype, so a category
+  // named "constructor" or "__proto__" can never pick up inherited properties.
+  const codes: Record<string, string> = Object.create(null);
+  if (accountCodeMap && typeof accountCodeMap === "object" && !Array.isArray(accountCodeMap)) {
+    for (const [category, code] of Object.entries(accountCodeMap)) {
+      if (typeof code === "string") codes[category] = code;
+    }
+  }
 
+  // Parse as plain arrays and build the row objects ourselves, instead of
+  // using csv-parse's `columns` option, which builds objects from header
+  // names taken from the request (see the csv-parse prototype advisory).
   let rows: ExportableRow[];
   try {
-    rows = parse(canonicalCsv, { columns: true, skip_empty_lines: true }) as ExportableRow[];
+    const table = parse(canonicalCsv, { skip_empty_lines: true }) as string[][];
+    const header = table[0] ?? [];
+    if (header.length === 0) {
+      return Response.json({ error: "Could not parse canonicalCsv." }, { status: 400 });
+    }
+    rows = table.slice(1).map((cells) => {
+      // No prototype, so a header named "__proto__" is just an ordinary key.
+      const row: Record<string, string> = Object.create(null);
+      header.forEach((name, i) => {
+        row[name] = cells[i] ?? "";
+      });
+      return row as unknown as ExportableRow;
+    });
   } catch {
     return Response.json({ error: "Could not parse canonicalCsv." }, { status: 400 });
   }
