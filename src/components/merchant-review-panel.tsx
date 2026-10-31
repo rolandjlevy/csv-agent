@@ -9,7 +9,7 @@ interface MerchantReviewPanelProps {
 }
 
 const selectClass =
-  "rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text focus:border-accent focus:outline-none";
+  "rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text focus:border-accent";
 
 export function MerchantReviewPanel({ merchants, onReclassify, profileName }: MerchantReviewPanelProps) {
   if (merchants.length === 0) return null;

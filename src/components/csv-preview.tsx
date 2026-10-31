@@ -15,8 +15,8 @@ function numericToneClass(value: string | undefined): string {
   const cleaned = value.replace(/[£$,]/g, "").trim();
   if (!/^-?\d+(\.\d+)?$/.test(cleaned)) return "text-text-muted";
   const num = parseFloat(cleaned);
-  if (num < 0) return "text-error/80";
-  if (num > 0) return "text-accent/80";
+  if (num < 0) return "text-error";
+  if (num > 0) return "text-accent";
   return "text-text-muted";
 }
 
@@ -40,7 +40,7 @@ export function CsvPreview({ columns, rows }: CsvPreviewProps) {
     <div className="relative overflow-hidden rounded-lg border border-border-subtle bg-bg-surface">
       <div className="h-[3px] bg-gradient-to-r from-accent via-tool-blue to-transparent" />
 
-      <div ref={scrollRef} className="overflow-x-auto">
+      <div ref={scrollRef} className="overflow-x-auto" tabIndex={0} role="region" aria-label="Preview of your file">
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-border-subtle bg-bg-elevated/40">

@@ -11,7 +11,7 @@ export function HomeButton() {
     <a
       href="/"
       aria-label="Go to homepage"
-      className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-bg-surface text-text-muted transition-colors hover:border-accent hover:text-accent"
+      className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-bg-surface text-text-muted transition-colors hover:border-accent hover:text-accent"
     >
       <svg
         viewBox="0 0 24 24"

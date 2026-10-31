@@ -16,6 +16,7 @@ import { ExportPanel } from "@/components/export-panel";
 import { BenefitStrip } from "@/components/benefit-strip";
 import { HowItWorks } from "@/components/how-it-works";
 import { SecondaryFeatures } from "@/components/secondary-features";
+import { GetInTouch } from "@/components/get-in-touch";
 
 const stateTransition = {
   initial: { opacity: 0, y: 12 },
@@ -70,12 +71,12 @@ export default function Home() {
             {...stateTransition}
             className="flex flex-col items-center gap-2 pb-16"
           >
-            <BenefitStrip />
             <CsvDropzone
               onFileAccepted={agent.uploadCsv}
               onSampleClick={agent.loadSample}
               isLoading={agent.status === "uploading"}
             />
+            <BenefitStrip />
             <HowItWorks />
             <SecondaryFeatures />
           </motion.main>
@@ -126,7 +127,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={agent.reset}
-                className="self-start text-sm text-text-muted underline-offset-4 hover:text-accent hover:underline"
+                className="min-h-11 self-start text-sm text-text-muted underline-offset-4 hover:text-accent hover:underline"
               >
                 ← Change file
               </button>
@@ -198,6 +199,8 @@ export default function Home() {
                 )}
               </div>
             )}
+
+            {agent.status === "done" && agent.answer && <GetInTouch />}
 
             {showExport && agent.status === "done" && agent.canonicalCsv && (
               <div ref={exportRef}>

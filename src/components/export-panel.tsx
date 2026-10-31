@@ -55,7 +55,7 @@ const FORMAT_CONFIG: Record<Format, FormatConfig> = {
 const FORMATS = Object.keys(FORMAT_CONFIG) as Format[];
 
 const inputClass =
-  'w-24 rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text focus:border-accent focus:outline-none';
+  'w-24 rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text focus:border-accent';
 
 // Triggers a browser download of a CSV string with no server round-trip for
 // the file itself (the mapping already happened server-side; this just

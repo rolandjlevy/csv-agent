@@ -25,7 +25,8 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: 'Statement Sorter',
-  description: 'See exactly where your money goes each month',
+  description:
+    'Turn any UK bank CSV into a categorised P&L, ready for Xero, QuickBooks or FreeAgent. A working demo of an AI agent.',
 };
 
 export default function RootLayout({
