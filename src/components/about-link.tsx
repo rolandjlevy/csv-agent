@@ -12,7 +12,7 @@ export function AboutLink({ children }: { children: React.ReactNode }) {
       type="button"
       onClick={open}
       aria-haspopup="dialog"
-      className="text-accent underline underline-offset-4 hover:opacity-80"
+      className="cursor-pointer text-accent underline underline-offset-4 hover:opacity-80"
     >
       {children}
     </button>
