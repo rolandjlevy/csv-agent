@@ -354,6 +354,16 @@ function generatePl({ file_path, filter }) {
 }
 
 function writeReport({ content, file_path }) {
+  // The hosted web demo is a shared, read-only server: don't write files there.
+  // Set only by src/app/api/agent/route.ts, so the CLI behaves exactly as before.
+  if (process.env.CSV_AGENT_DISABLE_FILE_WRITES === '1') {
+    return {
+      success: false,
+      error:
+        'Saving files is not available in the web demo. Put the full report in your answer instead.',
+    };
+  }
+
   // Ignore any directory the model put in file_path — only keep the file
   // name and always write inside REPORTS_DIR.
   const relativePath = path.join(REPORTS_DIR, path.basename(file_path));

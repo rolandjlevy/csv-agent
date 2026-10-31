@@ -1,4 +1,5 @@
 import { detectProfile, looksCanonical, type AdaptProfile } from "@lib/csv-adapt";
+import { checkRateLimit, validateCsv } from "@/lib/api-guard";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,11 @@ interface DetectResponse {
 // it, so the browser can show an editable confirmation panel BEFORE the
 // (more expensive) transform + agent run. Already-canonical files skip this.
 export async function POST(req: Request): Promise<Response> {
+  const limit = checkRateLimit(req);
+  if (!limit.ok) {
+    return Response.json({ error: limit.message }, { status: limit.status });
+  }
+
   let body: DetectRequestBody;
   try {
     body = await req.json();
@@ -25,6 +31,11 @@ export async function POST(req: Request): Promise<Response> {
   const { csvData } = body;
   if (typeof csvData !== "string" || !csvData.trim()) {
     return Response.json({ error: "Missing or invalid csvData." }, { status: 400 });
+  }
+
+  const sizeCheck = validateCsv(csvData);
+  if (!sizeCheck.ok) {
+    return Response.json({ error: sizeCheck.message }, { status: sizeCheck.status });
   }
 
   if (looksCanonical(csvData)) {
