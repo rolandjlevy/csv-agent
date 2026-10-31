@@ -5,7 +5,9 @@ import { useDropzone, type FileRejection } from "react-dropzone";
 import { motion } from "framer-motion";
 import { friendlyRejection } from "@/lib/file-errors";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// Vercel rejects request bodies over 4.5MB, and the CSV is sent inside a JSON
+// body with other fields, so the limit is kept well below that.
+const MAX_FILE_SIZE = 3.5 * 1024 * 1024;
 
 interface CsvDropzoneProps {
   onFileAccepted: (file: File) => Promise<void>;
@@ -135,7 +137,7 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
                 ? "Drop it here"
                 : "Drop a CSV here or tap to browse"}
           </p>
-          <p className="text-xs text-text-faint">.csv or .tsv · max 5MB</p>
+          <p className="text-xs text-text-faint">.csv or .tsv · max 3.5MB</p>
           <p className="mt-1 text-xs font-medium text-text">
             Demo only: please don&rsquo;t upload real client data.
           </p>

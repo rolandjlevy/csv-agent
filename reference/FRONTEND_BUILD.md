@@ -149,7 +149,7 @@ The full viewport. Clean, minimal, inviting.
   - Icon: document/spreadsheet icon
   - Text: "Drop your CSV here or click to browse"
   - Accepted formats: .csv, .tsv
-  - Max file size: 5MB
+  - Max file size: 3.5MB (the host rejects request bodies over 4.5MB)
   - On drop: file name + row count appear, zone shrinks
 - Below the drop zone: a small "or try with sample data" link
   that loads data/transactions.csv automatically

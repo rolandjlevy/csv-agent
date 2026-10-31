@@ -1,4 +1,4 @@
-# CLAUDE.md
+# Architecture
 
 ## Architecture (read in this order)
 

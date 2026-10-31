@@ -15,7 +15,7 @@ export function friendlyRejection(rejection: FileRejection): string {
   const code = rejection.errors[0]?.code;
 
   if (code === "file-too-large") {
-    return "That file is over the 5MB limit. Try exporting a shorter date range.";
+    return "That file is over the 3.5MB limit. Try exporting a shorter date range.";
   }
   if (code === "too-many-files") {
     return "Please drop one file at a time.";
