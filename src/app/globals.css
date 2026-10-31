@@ -93,6 +93,17 @@ body {
   animation: tool-pulse 1.6s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .tool-card-pending,
+  .animate-pulse {
+    animation: none;
+  }
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

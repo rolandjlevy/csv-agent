@@ -5,6 +5,7 @@ import { CONTACT_HREF, SITE } from '@/lib/site';
 export const metadata: Metadata = {
   title: 'Privacy — Statement Sorter',
   description: 'What Statement Sorter does with the files you run through it.',
+  alternates: { canonical: '/privacy' },
 };
 
 export default function PrivacyPage() {

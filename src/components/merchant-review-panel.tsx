@@ -32,6 +32,7 @@ export function MerchantReviewPanel({ merchants, onReclassify, profileName }: Me
           <li key={m.key} className="flex items-center justify-between gap-3">
             <span className="truncate font-mono text-xs text-text-muted">{m.key}</span>
             <select
+              aria-label={`Category for ${m.key}`}
               className={selectClass}
               value={m.category}
               onChange={(e) => onReclassify(m.key, e.target.value)}
