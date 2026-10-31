@@ -2,22 +2,35 @@ import { randomUUID } from "crypto";
 import { unlink, writeFile } from "fs/promises";
 import os from "os";
 import path from "path";
-import { runAgentLoop, type AgentEvent, type AgentMessage } from "@lib/agent-core";
-import { adaptCsv, transformAndCategorise, type AdaptProfile } from "@lib/csv-adapt";
+import { runAgentLoop, type AgentEvent } from "@lib/agent-core";
+import { adaptCsv, transformAndCategorise } from "@lib/csv-adapt";
+import {
+  checkRateLimit,
+  validateCsv,
+  validateHistory,
+  validateMerchantMap,
+  validateProfile,
+  validateQuestion,
+} from "@/lib/api-guard";
 
 export const runtime = "nodejs";
+
+// The web demo runs on a read-only, shared server, so the write_report tool
+// must not save files here (see writeReport in tools.js). The CLI never sets
+// this, so it keeps saving reports as before.
+process.env.CSV_AGENT_DISABLE_FILE_WRITES = "1";
 
 interface AgentRequestBody {
   csvData?: unknown;
   question?: unknown;
-  profile?: AdaptProfile;
+  profile?: unknown;
   // Prior conversation (as returned in an earlier response's "done" event's
   // `messages`) — sent back to continue asking follow-up questions with full
   // context instead of starting a fresh conversation each time.
   history?: unknown;
   // Merchant key -> category carried forward from a saved profile, so only
   // unknown merchants get sent to the classifier.
-  knownMerchantMap?: Record<string, string>;
+  knownMerchantMap?: unknown;
 }
 
 // A synthetic NDJSON line the route emits itself (not part of the agent
@@ -48,13 +61,19 @@ function ndjsonLine(event: StreamEvent): Uint8Array {
   return new TextEncoder().encode(ndjsonText(event));
 }
 
-function singleEventResponse(event: AgentEvent): Response {
+function singleEventResponse(event: AgentEvent, status = 200): Response {
   return new Response(ndjsonText(event), {
+    status,
     headers: { "Content-Type": "application/x-ndjson; charset=utf-8" },
   });
 }
 
 export async function POST(req: Request): Promise<Response> {
+  const limit = checkRateLimit(req);
+  if (!limit.ok) {
+    return singleEventResponse({ type: "error", message: limit.message }, limit.status);
+  }
+
   let body: AgentRequestBody;
   try {
     body = await req.json();
@@ -62,17 +81,41 @@ export async function POST(req: Request): Promise<Response> {
     return singleEventResponse({ type: "error", message: "Invalid JSON body." });
   }
 
-  const { csvData, question, profile, history, knownMerchantMap } = body;
+  const { csvData, question: rawQuestion, profile: rawProfile, history: rawHistory, knownMerchantMap: rawMerchantMap } = body;
 
   if (typeof csvData !== "string" || !csvData.trim()) {
-    return singleEventResponse({ type: "error", message: "Missing or invalid csvData." });
+    return singleEventResponse({ type: "error", message: "Missing or invalid csvData." }, 400);
   }
-  if (typeof question !== "string" || !question.trim()) {
-    return singleEventResponse({ type: "error", message: "Missing or invalid question." });
+  if (typeof rawQuestion !== "string" || !rawQuestion.trim()) {
+    return singleEventResponse({ type: "error", message: "Missing or invalid question." }, 400);
   }
-  const priorMessages: AgentMessage[] | undefined = Array.isArray(history)
-    ? (history as AgentMessage[])
-    : undefined;
+
+  const csvCheck = validateCsv(csvData);
+  if (!csvCheck.ok) {
+    return singleEventResponse({ type: "error", message: csvCheck.message }, csvCheck.status);
+  }
+  const questionCheck = validateQuestion(rawQuestion);
+  if (!questionCheck.ok) {
+    return singleEventResponse({ type: "error", message: questionCheck.message }, questionCheck.status);
+  }
+  const historyCheck = validateHistory(rawHistory);
+  if (!historyCheck.ok) {
+    return singleEventResponse({ type: "error", message: historyCheck.message }, historyCheck.status);
+  }
+  const profileCheck = validateProfile(rawProfile);
+  if (!profileCheck.ok) {
+    return singleEventResponse({ type: "error", message: profileCheck.message }, profileCheck.status);
+  }
+  const merchantMapCheck = validateMerchantMap(rawMerchantMap);
+  if (!merchantMapCheck.ok) {
+    return singleEventResponse({ type: "error", message: merchantMapCheck.message }, merchantMapCheck.status);
+  }
+
+  const question = questionCheck.value;
+  const priorMessages = historyCheck.value;
+  const profile = profileCheck.value;
+  const knownMerchantMap = merchantMapCheck.value;
+
   if (!process.env.ANTHROPIC_API_KEY) {
     return singleEventResponse({
       type: "error",
