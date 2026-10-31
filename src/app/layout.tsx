@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { AboutProvider } from '@/components/about-context';
 import { AboutButton } from '@/components/about-button';
@@ -54,6 +56,8 @@ export default function RootLayout({
             <Footer />
           </AboutProvider>
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
