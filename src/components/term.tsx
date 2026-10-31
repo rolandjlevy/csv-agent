@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface TermProps {
@@ -17,6 +17,7 @@ export function Term({ children, detail }: TermProps) {
   const [open, setOpen] = useState(false);
   const [nudge, setNudge] = useState(0);
   const tooltipRef = useRef<HTMLSpanElement>(null);
+  const tooltipId = useId();
 
   useEffect(() => {
     if (!open || !tooltipRef.current) return;
@@ -29,6 +30,16 @@ export function Term({ children, detail }: TermProps) {
     } else {
       setNudge(0);
     }
+  }, [open]);
+
+  // Escape dismisses the hint without moving focus (WCAG 1.4.13).
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
   const handleOpen = () => {
@@ -46,6 +57,7 @@ export function Term({ children, detail }: TermProps) {
     >
       <span
         tabIndex={0}
+        aria-describedby={open ? tooltipId : undefined}
         className="cursor-help font-medium text-text underline decoration-dotted decoration-text-faint underline-offset-4 transition-colors hover:text-accent hover:decoration-accent focus:text-accent"
       >
         {children}
@@ -55,6 +67,7 @@ export function Term({ children, detail }: TermProps) {
         {open && (
           <motion.span
             ref={tooltipRef}
+            id={tooltipId}
             role="tooltip"
             initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}

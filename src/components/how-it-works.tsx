@@ -8,6 +8,7 @@ const STEPS = [
 export function HowItWorks() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
+      <h2 className="sr-only">How it works</h2>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-4 sm:gap-4">
         {STEPS.map((s) => (
           <div

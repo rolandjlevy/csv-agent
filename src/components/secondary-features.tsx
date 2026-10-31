@@ -20,6 +20,7 @@ const FEATURES = [
 export function SecondaryFeatures() {
   return (
     <div className="mx-auto w-full max-w-2xl border-t border-border-subtle px-4 py-8">
+      <h2 className="sr-only">More details</h2>
       <ul className="flex flex-col gap-3">
         {FEATURES.map((f) => (
           <li key={f.title} className="text-sm leading-relaxed text-text-muted">

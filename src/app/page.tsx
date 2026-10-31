@@ -25,6 +25,11 @@ const stateTransition = {
   transition: { duration: 0.25, ease: "easeOut" as const },
 };
 
+// Smooth scrolling is skipped for visitors who ask their device to reduce motion.
+function scrollBehavior(): ScrollBehavior {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}
+
 export default function Home() {
   const agent = useAgent();
   const feedEndRef = useRef<HTMLDivElement>(null);
@@ -34,7 +39,7 @@ export default function Home() {
   const [recipeDismissed, setRecipeDismissed] = useState(false);
 
   useEffect(() => {
-    feedEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    feedEndRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "end" });
   }, [agent.steps, agent.answer, agent.error]);
 
   useEffect(() => {
@@ -50,7 +55,7 @@ export default function Home() {
 
   useEffect(() => {
     if (showExport) {
-      exportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      exportRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
     }
   }, [showExport]);
 
@@ -145,6 +150,15 @@ export default function Home() {
             {...stateTransition}
             className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-10"
           >
+            <h1 className="sr-only">Statement Sorter</h1>
+            <p role="status" className="sr-only">
+              {agent.status === "running"
+                ? "Working on your question."
+                : agent.status === "done"
+                  ? "Answer ready."
+                  : ""}
+            </p>
+
             {agent.question && <AgentFeed question={agent.question} steps={agent.steps} />}
 
             {agent.status === "running" && (
@@ -165,6 +179,7 @@ export default function Home() {
 
             {agent.error && (
               <motion.div
+                role="alert"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="rounded-lg border border-error/40 bg-error/10 px-4 py-3 text-sm text-error"

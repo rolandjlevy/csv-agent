@@ -23,7 +23,7 @@ export function AnswerCard({ text, stats }: AnswerCardProps) {
       </div>
 
       {stats && (
-        <div className="mt-4 rounded-md bg-bg-elevated px-3 py-2 text-xs text-text-faint">
+        <div className="mt-4 rounded-md bg-bg-elevated px-3 py-2 text-xs text-text-muted">
           {stats.turns} turns · {stats.toolCalls} tool calls ·{" "}
           {(stats.durationMs / 1000).toFixed(1)}s
         </div>

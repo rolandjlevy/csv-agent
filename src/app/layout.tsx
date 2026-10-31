@@ -8,6 +8,7 @@ import { AboutProvider } from '@/components/about-context';
 import { AboutButton } from '@/components/about-button';
 import { HomeButton } from '@/components/home-button';
 import { Footer } from '@/components/footer';
+import { MotionProvider } from '@/components/motion-provider';
 import { SITE } from '@/lib/site';
 import './globals.css';
 
@@ -71,17 +72,24 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
         >
-          <AboutProvider>
-            <div className="absolute top-4 left-4 z-50">
-              <HomeButton />
-            </div>
-            <div className="absolute top-4 right-4 z-50 flex items-center gap-2">
-              <AboutButton />
-              <ThemeToggle />
-            </div>
-            {children}
-            <Footer />
-          </AboutProvider>
+          <MotionProvider>
+            <AboutProvider>
+              <nav
+                aria-label="Site controls"
+                className="pointer-events-none absolute inset-x-0 top-4 z-50 flex items-start justify-between px-4"
+              >
+                <div className="pointer-events-auto">
+                  <HomeButton />
+                </div>
+                <div className="pointer-events-auto flex items-center gap-2">
+                  <AboutButton />
+                  <ThemeToggle />
+                </div>
+              </nav>
+              {children}
+              <Footer />
+            </AboutProvider>
+          </MotionProvider>
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />
