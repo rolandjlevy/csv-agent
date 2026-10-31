@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useDropzone, type FileRejection } from "react-dropzone";
 import { motion } from "framer-motion";
+import { friendlyRejection } from "@/lib/file-errors";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -20,8 +21,7 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
       setLocalError(null);
 
       if (rejections.length > 0) {
-        const reason = rejections[0].errors[0]?.message ?? "File could not be accepted.";
-        setLocalError(reason);
+        setLocalError(friendlyRejection(rejections[0]));
         return;
       }
 

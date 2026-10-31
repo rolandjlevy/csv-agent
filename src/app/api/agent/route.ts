@@ -4,6 +4,7 @@ import os from "os";
 import path from "path";
 import { runAgentLoop, type AgentEvent } from "@lib/agent-core";
 import { adaptCsv, transformAndCategorise } from "@lib/csv-adapt";
+import { toFriendlyMessage } from "@/lib/api-errors";
 import {
   checkRateLimit,
   validateCsv,
@@ -167,7 +168,7 @@ export async function POST(req: Request): Promise<Response> {
         controller.enqueue(
           ndjsonLine({
             type: "error",
-            message: error instanceof Error ? error.message : "Agent run failed.",
+            message: toFriendlyMessage(error, "api/agent"),
           })
         );
       } finally {

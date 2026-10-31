@@ -234,21 +234,23 @@ export function ColumnConfirmPanel({
         <CsvPreview columns={[...CANONICAL_COLUMNS]} rows={preview} />
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-text-muted">
-        <input
-          type="checkbox"
-          checked={rememberFormat}
-          onChange={(e) => setRememberFormat(e.target.checked)}
-          className="h-4 w-4 accent-accent"
-        />
-        Remember this format as
+      <label className="flex flex-wrap items-center gap-2 text-sm text-text-muted">
+        <span className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={rememberFormat}
+            onChange={(e) => setRememberFormat(e.target.checked)}
+            className="h-4 w-4 accent-accent"
+          />
+          Remember this format as
+        </span>
         <input
           type="text"
           value={saveName}
           onChange={(e) => setSaveName(e.target.value)}
           disabled={!rememberFormat}
           placeholder="e.g. Barclays Business"
-          className="flex-1 rounded-lg border border-border bg-bg-surface px-3 py-1.5 text-sm text-text focus:border-accent disabled:opacity-50"
+          className="min-w-0 flex-1 basis-40 rounded-lg border border-border bg-bg-surface px-3 py-1.5 text-sm text-text focus:border-accent disabled:opacity-50"
         />
       </label>
 
