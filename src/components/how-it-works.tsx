@@ -1,5 +1,5 @@
 const STEPS = [
-  { n: 1, title: "Drop the CSV", body: "any UK bank, any column layout" },
+  { n: 1, title: "Drop the CSV", body: "most UK banks, any column layout" },
   { n: 2, title: "It works out the format", body: "dates, split money in/out columns, £ signs" },
   { n: 3, title: "Review the categorisation", body: "anything unclear is flagged, not guessed" },
   { n: 4, title: "Get your categorised P&L", body: "Export straight to Xero, QuickBooks or FreeAgent" },
@@ -18,7 +18,7 @@ export function HowItWorks() {
               {s.n}
             </span>
             <p className="text-sm font-medium text-text">{s.title}</p>
-            <p className="text-xs text-text-muted">{s.body}</p>
+            <p className="text-sm text-text-muted">{s.body}</p>
           </div>
         ))}
       </div>

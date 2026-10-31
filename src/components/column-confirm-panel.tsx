@@ -39,7 +39,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const selectClass =
-  "rounded-lg border border-border bg-bg-surface px-3 py-2 text-sm text-text focus:border-accent focus:outline-none";
+  "rounded-lg border border-border bg-bg-surface px-3 py-2 text-sm text-text focus:border-accent";
 
 export function ColumnConfirmPanel({
   fileName,
@@ -248,7 +248,7 @@ export function ColumnConfirmPanel({
           onChange={(e) => setSaveName(e.target.value)}
           disabled={!rememberFormat}
           placeholder="e.g. Barclays Business"
-          className="flex-1 rounded-lg border border-border bg-bg-surface px-3 py-1.5 text-sm text-text focus:border-accent focus:outline-none disabled:opacity-50"
+          className="flex-1 rounded-lg border border-border bg-bg-surface px-3 py-1.5 text-sm text-text focus:border-accent disabled:opacity-50"
         />
       </label>
 

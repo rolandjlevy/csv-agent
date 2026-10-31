@@ -46,7 +46,7 @@ export function Term({ children, detail }: TermProps) {
     >
       <span
         tabIndex={0}
-        className="cursor-help font-medium text-text underline decoration-dotted decoration-text-faint underline-offset-4 transition-colors hover:text-accent hover:decoration-accent focus:text-accent focus:outline-none"
+        className="cursor-help font-medium text-text underline decoration-dotted decoration-text-faint underline-offset-4 transition-colors hover:text-accent hover:decoration-accent focus:text-accent"
       >
         {children}
       </span>

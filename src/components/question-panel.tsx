@@ -4,22 +4,13 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 const PREDEFINED_QUESTIONS = [
+  { emoji: '🧾', text: "What's still unclassified?" },
+  { emoji: '📅', text: 'Total overheads by month?' },
+  { emoji: '🔍', text: 'Anything that looks like VAT or a transfer?' },
+  { emoji: '🏷️', text: 'What are the biggest costs of sales?' },
   { emoji: '💰', text: 'What did I spend most on?' },
-  { emoji: '📅', text: 'Show me my spending broken down by month' },
-  { emoji: '⚖️', text: 'Is my most recent month above or below my average?' },
-  { emoji: '📊', text: "What's my average daily spend?" },
-  { emoji: '💼', text: "Am I spending more than I'm earning?" },
-  { emoji: '🔍', text: 'Any unusual transactions?' },
+  { emoji: '🕵️', text: 'Any unusual transactions?' },
   { emoji: '📺', text: 'How much went to subscriptions?' },
-  {
-    emoji: '✂️',
-    text: 'Canceling which subscriptions save the most with the least impact?',
-  },
-  {
-    emoji: '🎯',
-    text: 'Help me build a plan to reduce my spending by £25 per month.',
-  },
-  { emoji: '📝', text: 'Write me a spending report' },
 ];
 
 interface QuestionPanelProps {
@@ -50,9 +41,9 @@ export function QuestionPanel({ onSubmit }: QuestionPanelProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.04 }}
             onClick={() => submit(q.text)}
-            className="rounded-full border border-border bg-bg-elevated px-3.5 py-1.5 text-sm text-text-muted transition-colors hover:border-accent hover:bg-accent-muted hover:text-text"
+            className="min-h-11 rounded-full border border-border bg-bg-elevated px-4 py-2 text-left text-sm text-text-muted transition-colors hover:border-accent hover:bg-accent-muted hover:text-text"
           >
-            <span className="mr-1.5">{q.emoji}</span>
+            <span className="mr-1.5" aria-hidden="true">{q.emoji}</span>
             {q.text}
           </motion.button>
         ))}
@@ -73,7 +64,7 @@ export function QuestionPanel({ onSubmit }: QuestionPanelProps) {
             if (e.key === 'Escape') setValue('');
           }}
           placeholder="Ask anything about your data..."
-          className="flex-1 rounded-lg border border-border bg-bg-surface px-4 py-3 text-sm text-text placeholder:text-text-faint focus:border-accent focus:outline-none"
+          className="flex-1 rounded-lg border border-border bg-bg-surface px-4 py-3 text-base text-text placeholder:text-text-faint focus:border-accent sm:text-sm"
         />
         <button
           type="submit"

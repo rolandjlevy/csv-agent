@@ -1,8 +1,10 @@
 import { Term } from '@/components/term';
+import { AboutLink } from '@/components/about-link';
+import { SITE } from '@/lib/site';
 
 export function Header() {
   return (
-    <header className="flex flex-col items-center gap-1 px-4 pt-12 pb-6 text-center sm:pt-16">
+    <header className="flex flex-col items-center gap-1 px-4 pt-20 pb-6 text-center sm:pt-16">
       <div className="flex items-center gap-2.5 sm:gap-3">
         <svg
           viewBox="0 0 24 24"
@@ -21,24 +23,28 @@ export function Header() {
         </h1>
       </div>
       <p className="mt-1 text-base font-medium text-text sm:text-lg">
-        See exactly where your money goes each month
-      </p>
-
-      <p className="mt-3 max-w-xl text-xs leading-relaxed text-text-muted sm:text-sm">
-        Drop the CSV — any bank, any layout. Statement Sorter reads the file,
-        sorts your transactions into clear{' '}
-        <Term detail="Income, cost of sales and overheads — not just a pile of categorised rows.">
-          categories
-        </Term>
-        , and shows you exactly where the money went — with a proper{' '}
+        Turn any bank CSV into a categorised{' '}
         <Term detail="Profit & Loss — the report that separates real income and costs from balance-sheet noise like transfers and drawings.">
           P&amp;L
-        </Term>{' '}
-        ready to export into{' '}
+        </Term>
+      </p>
+
+      <p className="mt-3 max-w-xl text-sm leading-relaxed text-text-muted">
+        Reads a statement from most UK banks, in any layout, sorts every
+        transaction into{' '}
+        <Term detail="Income, cost of sales and overheads — not just a pile of categorised rows.">
+          clear categories
+        </Term>
+        , and flags anything it&rsquo;s unsure of. Then export to{' '}
         <Term detail="The cloud accounting platforms most UK bookkeepers already use.">
           Xero, QuickBooks or FreeAgent
         </Term>
-        . In the time it used to take to rename the columns.
+        .
+      </p>
+
+      <p className="mt-3 text-sm text-text-muted">
+        A working demo of an AI agent, built by{' '}
+        <AboutLink>{SITE.maker}</AboutLink>.
       </p>
     </header>
   );
