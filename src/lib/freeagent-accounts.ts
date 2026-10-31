@@ -25,7 +25,7 @@ export const DEFAULT_FREEAGENT_ACCOUNT_NAMES: Record<string, string | null> = {
   "Loan Interest": "Bank Charges and Interest Paid",
   "Bank Charges & Fees": "Bank Charges and Interest Paid",
   "Professional Fees": "Legal and Professional Fees",
-  "Subscriptions & Software": "General Administrative Expenses",
+  "Subscriptions & Software": "Computer Software",
   "Repairs & Maintenance": "Repairs and Maintenance",
   "Other Expenses": "General Administrative Expenses",
 
