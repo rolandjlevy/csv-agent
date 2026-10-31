@@ -7,7 +7,7 @@ const PREDEFINED_QUESTIONS = [
   { emoji: '🧾', text: "What's still unclassified?" },
   { emoji: '📅', text: 'Total overheads by month?' },
   { emoji: '🔍', text: 'Anything that looks like VAT or a transfer?' },
-  { emoji: '🏷️', text: 'What are the biggest costs of sales?' },
+  { emoji: '🏷️', text: "What's my net profit for the period?" },
   { emoji: '💰', text: 'What did I spend most on?' },
   { emoji: '🕵️', text: 'Any unusual transactions?' },
   { emoji: '📺', text: 'How much went to subscriptions?' },

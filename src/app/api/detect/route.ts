@@ -1,5 +1,6 @@
 import { detectProfile, looksCanonical, type AdaptProfile } from "@lib/csv-adapt";
 import { checkRateLimit, validateCsv } from "@/lib/api-guard";
+import { toFriendlyMessage } from "@/lib/api-errors";
 
 export const runtime = "nodejs";
 
@@ -51,7 +52,7 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json({ skipped: false, profile } satisfies DetectResponse);
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "Could not detect CSV structure." },
+      { error: toFriendlyMessage(error, "api/detect") },
       { status: 500 }
     );
   }
