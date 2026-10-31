@@ -11,6 +11,8 @@ There are two ways to use it: a **CLI** and a **web frontend**. Both run
 the exact same agent loop — the frontend doesn't reimplement anything,
 it just wraps the CLI's core in a streaming HTTP endpoint.
 
+![Statement Sorter screenshot](https://github.com/rolandjlevy/csv-agent/blob/main/docs/images/statement-sorter-1600-1200.jpg?raw=true)
+
 ## How the agent works
 
 This isn't a framework demo — it's the whole mechanism, in plain code.
