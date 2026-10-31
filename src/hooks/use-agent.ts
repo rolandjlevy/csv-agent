@@ -20,7 +20,10 @@ import {
   type SavedProfile,
 } from "@/lib/saved-profiles";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB, per the upload-state spec
+const MAX_FILE_SIZE = 3.5 * 1024 * 1024; // keep below the host's 4.5MB request limit
+// The CSV travels inside a JSON body, where quotes and line breaks are escaped
+// and so take more room than in the file itself.
+const MAX_JSON_BYTES = 4_000_000;
 
 // Fired by runRecipe() instead of waiting on QuestionPanel input. Phrasing
 // matches the exact "P&L / profit / management-accounts" trigger the agent
@@ -180,12 +183,15 @@ export function useAgent() {
   const uploadCsv = useCallback(
     async (file: File) => {
       if (file.size > MAX_FILE_SIZE) {
-        throw new Error("File is too large — max size is 5MB.");
+        throw new Error("File is too large — max size is 3.5MB.");
       }
 
       setStatus("uploading");
       try {
         const text = await file.text();
+        if (new Blob([JSON.stringify({ csvData: text })]).size > MAX_JSON_BYTES) {
+          throw new Error("That file is too large to process. Try exporting a shorter date range.");
+        }
         await applyCsv(file.name, text);
       } catch (err) {
         setStatus("idle");

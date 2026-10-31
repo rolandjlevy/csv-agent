@@ -6,8 +6,8 @@ import type { AdaptProfile } from "@lib/csv-adapt";
 // every limit is enforced here too.
 
 export const LIMITS = {
-  /** Matches the dropzone's 5MB limit. */
-  maxCsvBytes: 5 * 1024 * 1024,
+  /** Matches the dropzone limit; Vercel rejects request bodies over 4.5MB. */
+  maxCsvBytes: 3.5 * 1024 * 1024,
   maxCsvRows: 10_000,
   maxQuestionChars: 500,
   maxHistoryMessages: 40,
@@ -84,7 +84,7 @@ export function resetRateLimit(): void {
 
 export function validateCsv(csvData: string): GuardResult<string> {
   if (Buffer.byteLength(csvData, "utf8") > LIMITS.maxCsvBytes) {
-    return fail(413, "That file is over the 5MB limit.");
+    return fail(413, "That file is over the 3.5MB limit.");
   }
   let rows = 1;
   for (let i = 0; i < csvData.length; i++) {
