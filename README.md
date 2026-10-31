@@ -1,214 +1,86 @@
 # 📄 Statement Sorter
 
-A minimal, real AI agent which takes a CSV file and a question, then
-decides for itself which tools to call — and in what order — to find
-the answer. You can hand it almost any bank's transaction export — it
-adapts the file into a canonical schema first, then runs the loop.
-
-See [the live demo](https://csv-agent-vert.vercel.app) in action
-
-There are two ways to use it: a **CLI** and a **web frontend**. Both run
-the exact same agent loop — the frontend doesn't reimplement anything,
-it just wraps the CLI's core in a streaming HTTP endpoint.
+**Turn any UK bank CSV into a categorised P&L, ready for Xero, QuickBooks or FreeAgent.**
 
 ![Statement Sorter screenshot](https://github.com/rolandjlevy/csv-agent/blob/main/docs/images/statement-sorter-1600-1200.jpg?raw=true)
 
-## How the agent works
+**[Live demo → statementsorter.co.uk](https://statementsorter.co.uk)**
+Demo only: use the built-in sample data, not real client files.
 
-This isn't a framework demo — it's the whole mechanism, in plain code.
+Statement Sorter is a working AI agent. Give it a bank export and a question, and it decides for itself which tools to call, and in what order, to find the answer. It runs the same agent loop from a CLI or a web app.
 
-1. You send Claude the question, plus four tool definitions (`read_csv`,
-   `analyse`, `generate_pl`, `write_report`).
-2. Claude responds with either a tool call or a final answer.
-3. If it's a tool call, the loop executes the corresponding function in
-   `tools.js` locally and sends the result back as a new message.
-4. Claude sees the result and decides what to do next — call another
-   tool, or answer.
-5. Repeat until Claude stops asking for tools (or a 10-turn safety limit
-   is hit).
+## What it does
 
-The loop never hardcodes "read the CSV, then analyse it" — Claude decides
-that sequence at runtime based on the question. That decision-making loop
-is the entire concept behind an "agent": an LLM repeatedly choosing
-actions and observing their results, rather than executing a fixed script.
+- **Reads messy exports.** Preamble rows, split "Money In / Money Out" columns, `£` mojibake, mixed date formats: it works out the layout itself.
+- **Categorises properly.** Income, cost of sales and overheads against a UK chart of accounts. Transfers, drawings and VAT stay off the P&L. Anything it can't classify is flagged for review, not guessed.
+- **Remembers.** Save a bank's format and your merchant categories once; next month's file is one click.
+- **Answers questions in plain English.** "What's still unclassified?", "Total overheads by month?"
+- **Exports** to Xero, QuickBooks Online or FreeAgent CSV.
 
-## Adapting any CSV (the ingestion stage)
+## Quick start
 
-The tools expect a canonical `Date,Description,Amount,Category,Bank`
-schema, but real bank exports rarely look like that — they have preamble
-rows, split "Money In"/"Money Out" columns, `£` mojibake, no Category
-column, and so on. So before the loop runs, `lib/csv-adapt.js` normalises
-whatever you give it into that canonical shape.
-
-The split of responsibility mirrors the tools: **the LLM decides, plain
-JavaScript does the work.** Two small one-off LLM calls happen at
-ingestion — `detectProfile()` works out the column mapping and date
-format, and `classifyMerchants()` sorts each unique merchant into a
-chart-of-accounts category. Every row is then transformed deterministically
-in plain JS — no model-side maths, the same property the `analyse` tool
-relies on. Files that are already canonical (`looksCanonical()`) skip the
-LLM entirely and pass straight through at no cost.
-
-The categories come from a proper chart-of-accounts (`lib/accounts.js`):
-income, cost of sales, overheads, and an explicit **exclude** bucket for
-balance-sheet movements (transfers, drawings, VAT, tax, loan principal,
-capital expenditure) that must never appear on a P&L. The `generate_pl`
-tool groups categorised rows into this structure and surfaces any
-unclassified transactions as exceptions requiring human review.
-
-`detectProfile()` also identifies the file's currency. That code is passed
-through to the agent loop so figures are formatted with the right symbol
-(£/$/€/ISO code) instead of assuming GBP — see `buildSystemPrompt()` in
-`lib/agent-core.js`.
-
-## Project structure
-
-```
-lib/accounts.js        ← chart-of-accounts definition (income / cost of sales /
-                          overheads / exclude) — imported by both csv-adapt and tools
-lib/csv-adapt.js       ← ingestion stage: normalises any bank's CSV into the canonical
-                          schema before the loop (LLM decides the mapping, JS transforms)
-lib/merchant.js        ← merchant-name normalisation shared by the classifier
-lib/agent-core.js      ← the loop itself (read this first) — shared by both versions
-tools.js               ← four tools, implemented as plain functions (no LLM calls
-                          inside them): read_csv, analyse, generate_pl, write_report
-lib/export/            ← deterministic canonical-CSV → accounting-system CSV mappers,
-                          used after the loop finishes, never inside it:
-                          ├── xero.js / xero.d.ts / xero-accounts.js
-                          ├── quickbooks.js / quickbooks.d.ts / quickbooks-accounts.js
-                          └── freeagent.js / freeagent.d.ts / freeagent-accounts.js
-data/transactions.csv  ← sample UK bank transactions to query against
-
-agent.js               ← CLI entry point, wraps lib/agent-core.js with console output;
-                          also handles --export <xero|quickbooks|freeagent> [--out <path>]
-
-src/                   ← Next.js web frontend
-├── app/
-│   ├── page.tsx           ← UI states: upload → [confirm columns] → ask → working/answer
-│   └── api/
-│       ├── detect/route.ts← detects the adapt profile for an uploaded CSV (JSON)
-│       ├── agent/route.ts ← adapts the CSV then streams the same agent loop as NDJSON
-│       ├── export/route.ts← maps a canonical CSV to an accounting-system format (JSON)
-│       └── sample/route.ts← serves data/transactions.csv to the browser
-├── components/             ← dropzone, csv preview, column-confirm panel, question chips,
-│                             agent feed, answer card, export-panel.tsx, etc.
-├── hooks/use-agent.ts      ← drives upload → detect → confirm → ask → stream client-side
-├── lib/canonical-preview.ts← client mirror of the deterministic transform (live preview)
-├── lib/xero-accounts.ts, quickbooks-accounts.ts, freeagent-accounts.ts
-│                           ← client-safe copies of lib/export/*-accounts.js's default
-│                             tables, for the export panel's UI (never bundle the CJS
-│                             lib/export modules themselves into a "use client" component)
-└── types/agent.ts
-```
-
-`lib/agent-core.js` is the only place the actual loop logic lives. `agent.js`
-calls it and prints events to the terminal; `src/app/api/agent/route.ts`
-calls it and streams the same events to the browser as NDJSON. Neither
-version contains its own copy of the decision loop.
-
-## Setup
+Requires Node.js 18.18 or later (Next.js 15's minimum) and an [Anthropic API key](https://console.anthropic.com/).
 
 ```bash
+git clone https://github.com/rolandjlevy/csv-agent.git
+cd csv-agent
 npm install
-cp .env.example .env
-# edit .env and add your ANTHROPIC_API_KEY
+cp .env.example .env      # then add your ANTHROPIC_API_KEY
+npm run dev               # open http://localhost:3000
 ```
 
-This one `ANTHROPIC_API_KEY` is used by both versions.
+No bank file handy? Click **Try it with a messy bank export**.
+
+## Command line
 
 ```bash
-npm i @anthropic-ai/claude-code -g
-# follow authentication steps, then...
-claude
-```
-
----
-
-## CLI version
-
-The original way to use csv-agent — a Node.js script you run directly
-against a CSV file.
-
-```bash
-node agent.js data/transactions.csv "What did I spend most on?"
 node agent.js data/transactions.csv "Give me a P&L for this data"
-node agent.js data/transactions.csv "How much did I spend on dining out in June?"
-node agent.js data/transactions.csv "What's my average daily spend?"
-node agent.js data/transactions.csv "Are there any uncategorised transactions?"
-node agent.js data/transactions.csv "Write me a monthly spending report and save it"
+node agent.js data/transactions.csv "What did I spend most on?"
+
+# Save a bank's format, reuse it later, and export for your accounting software
+node agent.js statement.csv "Give me a P&L" --save-profile "Monzo Current"
+node agent.js statement.csv --export xero --out xero.csv --profile "Monzo Current"
 ```
 
-(`npm run cli -- data/transactions.csv "..."` works the same way.)
+Every turn prints which tool Claude chose, what it passed and what came back, so you can watch the decisions as they happen. Profiles are stored in `~/.csv-agent/profiles/`.
 
-Before the loop runs you'll see an `🧰 Adapting CSV...` step: the file is
-normalised into the canonical schema (with `🧭` lines reporting what was
-detected), unless it's already canonical, in which case it passes straight
-through. Then each question triggers a different sequence of tool calls —
-that's the point. Watch the terminal output: every turn prints which tool
-Claude chose, what input it passed, and what came back, so you can see the
-decision loop happening live — including a spinner while Claude is
-thinking, and a 💭 line whenever Claude narrates its reasoning before
-calling a tool.
+## How it works
 
-In an interactive terminal, once Claude answers you'll be prompted
-`❓ Follow-up (press Enter to exit)`. The conversation (including everything
-Claude has already read and calculated) carries forward, so a follow-up
-like "and what about groceries specifically?" doesn't need to restate any
-context — press Enter with no input to end the session. Piped/non-interactive
-runs (e.g. in CI) just answer the one question and exit, as before.
+Two stages, with one rule: **the LLM decides, plain JavaScript does the work.**
 
-Files involved: `agent.js`, `lib/csv-adapt.js`, `lib/agent-core.js`, `tools.js`.
-
-## Frontend version
-
-A dark-mode web UI (Next.js 15 + Tailwind + Framer Motion) that lets you
-drag a CSV into the browser, pick a question, and watch the agent's
-tool calls stream in live instead of reading terminal output. [Try the demo](https://csv-agent-vert.vercel.app) 🚀
-
-```bash
-npm run dev
-# open http://localhost:3000
+```
+bank CSV ─► 1. Ingestion ─► canonical CSV ─► 2. Agent loop ─► answer / P&L ─► export
+            (lib/csv-adapt.js)                (lib/agent-core.js)
 ```
 
-```bash
-npm run build && npm start   # production build
-```
+1. **Ingestion.** One LLM call works out the column mapping and date format (`detectProfile()`); another sorts each unique merchant into a chart-of-accounts category (`classifyMerchants()`). Every row is then transformed in deterministic JS, with no model-side maths. Files already in the canonical `Date,Description,Amount,Category,Bank` shape skip the LLM entirely.
+2. **Agent loop.** Claude gets your question and four tools (`read_csv`, `analyse`, `generate_pl`, `write_report`), calls them, reads the results and repeats until it can answer (10-turn safety limit). The sequence is never hard-coded: Claude picks it per question.
 
-How it works:
+The web app doesn't reimplement any of this. It wraps the same core in a streaming endpoint (`/api/agent`) and shows each step live.
 
-1. You drop a bank CSV (or click "try with sample data" to load
-   `data/transactions.csv`) — it's parsed in the browser with Papaparse
-   for the preview table; the raw text is kept in memory.
-2. The browser POSTs the raw CSV to `/api/detect`, which returns either
-   `{ skipped: true }` (already canonical) or a detected adapt **profile**.
-   If a profile comes back, a **column-confirm panel** appears so you can
-   remap columns; the canonical preview updates live, computed entirely in
-   the browser via `src/lib/canonical-preview.ts` (no server round-trip).
-3. You pick a predefined question chip or type your own.
-4. The browser POSTs `{ csvData, question, profile, history }` to
-   `/api/agent`, which transforms the CSV using the confirmed profile
-   (skipping re-detection), writes the canonical result to a server-side
-   temp file, and runs `lib/agent-core.js` against it — the same loop the
-   CLI uses. `history` is the prior conversation's messages (empty on the
-   first question); the agent restates the file path on every turn, so a
-   follow-up works correctly even though each request writes the canonical
-   CSV to a fresh temp path.
-5. Every step (`turn_start`, `thinking`, `tool_call`, `tool_result`,
-   `answer`, `done`/`error`) is streamed back as one line of NDJSON the
-   instant it happens, and rendered live as an animated feed — no
-   batching, no WebSockets, no raw JSON shown on screen. The `done` event
-   also carries the updated `messages`, which the browser holds in memory
-   and sends back as `history` on the next question.
-6. The final answer renders as a formatted card with bold text, tables,
-   and a "N turns · N tool calls · N.Ns" footer; "Ask another question"
-   continues the same conversation (no restating context) without
-   re-uploading the file — upload a new file or click "Change file" to
-   start a fresh conversation.
+## Project layout
 
-Nothing is persisted server-side — the temp CSV file is deleted as soon
-as the request finishes, and there's no database or auth; it's a local
-demo tool.
+| Path | What it is |
+| --- | --- |
+| `lib/agent-core.js` | The agent loop. Read this first. Shared by CLI and web. |
+| `lib/csv-adapt.js` | Ingestion: any bank CSV into the canonical schema |
+| `lib/accounts.js` | Chart of accounts (income, cost of sales, overheads, exclude) |
+| `tools.js` | The four tools, as plain functions with no LLM calls inside |
+| `lib/export/` | Xero, QuickBooks and FreeAgent CSV mappers |
+| `agent.js` | CLI entry point |
+| `src/` | Next.js web app (`app/`, `components/`, `hooks/use-agent.ts`) |
+| `stress-test/` | Real-world bank-format fixtures and checks |
 
-Files involved: `src/app/**`, `src/components/**`, `src/hooks/use-agent.ts`,
-`src/lib/canonical-preview.ts`, `lib/csv-adapt.js`, `lib/agent-core.js`,
-`tools.js`.
+More detail in [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Privacy
+
+In the web app, the file you run (sample or upload) is sent to the app's server and on to Anthropic's API so the AI can read it. The app has no accounts and no database, and its temporary files are deleted when the request finishes. Saved bank formats and merchant categories live in your browser's local storage. Please don't upload real client data to the hosted demo; run it locally with your own API key instead.
+
+## Built with
+
+Claude API (`@anthropic-ai/sdk`), Next.js 15, React 19, Tailwind CSS 4, Framer Motion, Papaparse.
+
+## Author
+
+Built by [Roland Levy](https://rolandlevy.co.uk/) · [GitHub](https://github.com/rolandjlevy) · [LinkedIn](https://www.linkedin.com/in/roland-levy/)
