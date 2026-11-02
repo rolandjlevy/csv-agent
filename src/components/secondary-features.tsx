@@ -1,33 +1,34 @@
 const FEATURES = [
   {
-    title: "A real P&L, with exceptions flagged",
-    body: "anything it can't classify is surfaced for review, not silently guessed",
-  },
-  {
-    title: "Built for UK practice",
-    body: "UK dates, VAT handling and UK chart of accounts conventions",
+    title: "It remembers each client",
+    body: "Set a client up once and next month’s file is done in a click. Setups are saved in this browser.",
   },
   {
     title: "Ask in plain English",
-    body: '"what did they spend on software in Q2?" Answered from the categorised data, no exporting required',
+    body: "“What did they spend on software in Q2?” Answered from the categorised data, no exporting needed.",
   },
   {
-    title: "No accounts, no database",
-    body: "Your file is sent to our server and to Anthropic's AI to be read. Saved client setups are stored in this browser.",
+    title: "Transfers stay off the P&L",
+    body: "Transfers, drawings and VAT are kept out, so profit isn’t overstated.",
   },
 ];
 
 export function SecondaryFeatures() {
   return (
-    <div className="mx-auto w-full max-w-2xl border-t border-border-subtle px-4 py-8">
-      <h2 className="sr-only">More details</h2>
-      <ul className="flex flex-col gap-3">
-        {FEATURES.map((f) => (
-          <li key={f.title} className="text-sm leading-relaxed text-text-muted">
-            <span className="font-medium text-text">{f.title}</span> — {f.body}
-          </li>
-        ))}
-      </ul>
+    <div className="mt-16 bg-tint py-14">
+      <section aria-labelledby="more-title" className="mx-auto max-w-5xl px-6">
+        <h2 id="more-title" className="mb-6 font-display text-[28px] font-semibold tracking-tight text-text">
+          Beyond the first file
+        </h2>
+        <div className="flex flex-wrap gap-8">
+          {FEATURES.map((f) => (
+            <div key={f.title} className="min-w-[240px] flex-1 basis-[260px]">
+              <p className="mb-1.5 text-[15px] font-semibold text-text">{f.title}</p>
+              <p className="text-sm leading-relaxed text-text-muted">{f.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

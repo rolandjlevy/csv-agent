@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAgent } from "@/hooks/use-agent";
-import { Header } from "@/components/header";
-import { CsvDropzone } from "@/components/csv-dropzone";
+import { Hero } from "@/components/hero";
+import { DemoNotice, OwnFileCard, useCsvIntake } from "@/components/csv-dropzone";
+import { LedgerDemo } from "@/components/ledger-demo";
 import { CsvPreview } from "@/components/csv-preview";
 import { ColumnConfirmPanel } from "@/components/column-confirm-panel";
 import { RecipeBanner } from "@/components/recipe-banner";
@@ -13,7 +14,6 @@ import { AgentFeed } from "@/components/agent-feed";
 import { AnswerCard } from "@/components/answer-card";
 import { MerchantReviewPanel } from "@/components/merchant-review-panel";
 import { ExportPanel } from "@/components/export-panel";
-import { BenefitStrip } from "@/components/benefit-strip";
 import { HowItWorks } from "@/components/how-it-works";
 import { SecondaryFeatures } from "@/components/secondary-features";
 import { GetInTouch } from "@/components/get-in-touch";
@@ -25,6 +25,15 @@ const stateTransition = {
   transition: { duration: 0.25, ease: "easeOut" as const },
 };
 
+// The home screen sits under the teal header, so it only fades: sliding would
+// open a gap between the header and the hero band while it moves.
+const fadeOnly = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 },
+  transition: { duration: 0.25, ease: "easeOut" as const },
+};
+
 // Smooth scrolling is skipped for visitors who ask their device to reduce motion.
 function scrollBehavior(): ScrollBehavior {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
@@ -32,6 +41,7 @@ function scrollBehavior(): ScrollBehavior {
 
 export default function Home() {
   const agent = useAgent();
+  const intake = useCsvIntake({ onFileAccepted: agent.uploadCsv, onSampleClick: agent.loadSample });
   const feedEndRef = useRef<HTMLDivElement>(null);
   // Which UI to show when a saved recipe matches — purely a view concern,
   // not agent/data state, so it lives here rather than in useAgent. Resets
@@ -67,21 +77,25 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-bg">
-      {!isWorkingState && <Header />}
-
       <AnimatePresence mode="wait">
         {isUploadState && (
-          <motion.main
-            key="upload"
-            {...stateTransition}
-            className="flex flex-col items-center gap-2 pb-16"
-          >
-            <CsvDropzone
-              onFileAccepted={agent.uploadCsv}
-              onSampleClick={agent.loadSample}
-              isLoading={agent.status === "uploading"}
-            />
-            <BenefitStrip />
+          <motion.main key="upload" {...fadeOnly} className="flex flex-col pb-4">
+            <Hero onSample={intake.handleSampleClick} isLoading={agent.status === "uploading"} />
+
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 pt-10">
+              <OwnFileCard intake={intake} isLoading={agent.status === "uploading"} />
+              <DemoNotice />
+              {intake.localError && (
+                <p role="alert" className="text-sm text-error">
+                  {intake.localError}
+                </p>
+              )}
+            </div>
+
+            <div className="mx-auto w-full max-w-5xl px-6 pt-8 md:hidden">
+              <LedgerDemo onPage />
+            </div>
+
             <HowItWorks />
             <SecondaryFeatures />
           </motion.main>
@@ -91,8 +105,9 @@ export default function Home() {
           <motion.main
             key="confirm"
             {...stateTransition}
-            className="mx-auto flex max-w-3xl flex-col gap-6 px-4 pb-16"
+            className="mx-auto flex max-w-3xl flex-col gap-6 px-4 pb-16 pt-10"
           >
+            <h1 className="sr-only">Statement Sorter</h1>
             {agent.savedProfileMatch && !recipeDismissed ? (
               <RecipeBanner
                 name={agent.savedProfileMatch.name}
@@ -117,8 +132,9 @@ export default function Home() {
           <motion.main
             key="ask"
             {...stateTransition}
-            className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-16 md:flex-row"
+            className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-16 pt-10 md:flex-row"
           >
+            <h1 className="sr-only">Statement Sorter</h1>
             <aside className="flex w-full flex-col gap-4 md:w-[46%]">
               <div className="rounded-lg border border-border-subtle bg-bg-surface p-4">
                 <p className="truncate font-mono text-sm text-text">{agent.csvInfo.name}</p>
