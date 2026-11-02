@@ -1,15 +1,13 @@
 "use client";
 
 import { CATEGORY_NAMES } from "@/lib/categories";
+import { Select } from "@/components/select";
 
 interface MerchantReviewPanelProps {
   merchants: { key: string; category: string }[];
   onReclassify: (key: string, category: string) => void;
   profileName?: string | null;
 }
-
-const selectClass =
-  "rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text focus:border-accent";
 
 export function MerchantReviewPanel({ merchants, onReclassify, profileName }: MerchantReviewPanelProps) {
   if (merchants.length === 0) return null;
@@ -31,18 +29,15 @@ export function MerchantReviewPanel({ merchants, onReclassify, profileName }: Me
         {merchants.map((m) => (
           <li key={m.key} className="flex items-center justify-between gap-3">
             <span className="truncate font-mono text-xs text-text-muted">{m.key}</span>
-            <select
-              aria-label={`Category for ${m.key}`}
-              className={selectClass}
+            <Select
+              size="sm"
+              align="right"
+              ariaLabel={`Category for ${m.key}`}
               value={m.category}
-              onChange={(e) => onReclassify(m.key, e.target.value)}
-            >
-              {CATEGORY_NAMES.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
+              onChange={(category) => onReclassify(m.key, category)}
+              options={CATEGORY_NAMES.map((name) => ({ value: name, label: name }))}
+              className="w-56 shrink-0"
+            />
           </li>
         ))}
       </ul>

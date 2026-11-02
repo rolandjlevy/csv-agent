@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import type { AdaptProfile } from "@/types/agent";
 import {
@@ -9,6 +9,7 @@ import {
   type RawPreview,
 } from "@/lib/canonical-preview";
 import { CsvPreview } from "@/components/csv-preview";
+import { Select } from "@/components/select";
 import { listSavedProfiles, type SavedProfile } from "@/lib/saved-profiles";
 
 interface ColumnConfirmPanelProps {
@@ -27,19 +28,22 @@ const CONVENTIONS: { value: AdaptProfile["amountConvention"]; label: string }[] 
   { value: "signed", label: "One signed amount column (+/−)" },
 ];
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+// Wraps one control with its label. The label's id is handed to the control, so
+// custom controls (the dropdowns) are named for screen readers.
+function Field({ label, children }: { label: string; children: (labelId: string) => React.ReactNode }) {
+  const labelId = useId();
   return (
-    <label className="flex flex-col gap-1.5">
-      <span className="text-[11px] font-medium uppercase tracking-wide text-text-faint">
+    <div className="flex flex-col gap-1.5">
+      <span id={labelId} className="text-[11px] font-medium uppercase tracking-wide text-text-faint">
         {label}
       </span>
-      {children}
-    </label>
+      {children(labelId)}
+    </div>
   );
 }
 
 const selectClass =
-  "rounded-lg border border-border bg-bg-surface px-3 py-2 text-sm text-text focus:border-accent";
+  "min-h-11 rounded-lg border border-border bg-bg-surface px-3 py-2 text-sm text-text focus:border-accent";
 
 export function ColumnConfirmPanel({
   fileName,
@@ -89,23 +93,20 @@ export function ColumnConfirmPanel({
   const set = <K extends keyof AdaptProfile>(key: K, value: AdaptProfile[K]) =>
     setEdited((prev) => ({ ...prev, [key]: value }));
 
-  const ColumnSelect = ({
-    value,
-    onChange,
-  }: {
-    value?: string;
-    onChange: (value: string) => void;
-  }) => (
-    <select className={selectClass} value={value ?? ""} onChange={(e) => onChange(e.target.value)}>
-      <option value="">— select column —</option>
-      {/* Keep the detected value selectable even if it's not a current header. */}
-      {value && !columnOptions.includes(value) && <option value={value}>{value}</option>}
-      {columnOptions.map((col) => (
-        <option key={col} value={col}>
-          {col}
-        </option>
-      ))}
-    </select>
+  // Not a component: it is called inline, so the dropdown keeps its open state
+  // when the panel re-renders.
+  const columnSelect = (labelId: string, value: string | undefined, onChange: (value: string) => void) => (
+    <Select
+      labelledBy={labelId}
+      value={value ?? ""}
+      onChange={onChange}
+      options={[
+        { value: "", label: "— select column —" },
+        // Keep the detected value selectable even if it's not a current header.
+        ...(value && !columnOptions.includes(value) ? [{ value, label: value }] : []),
+        ...columnOptions.map((col) => ({ value: col, label: col })),
+      ]}
+    />
   );
 
   const isSplit = edited.amountConvention !== "signed";
@@ -137,93 +138,80 @@ export function ColumnConfirmPanel({
 
       {savedProfiles.length > 0 && (
         <Field label="Use a saved profile">
-          <select
-            className={selectClass}
-            value={selectedSavedName}
-            onChange={(e) => applySavedSelection(e.target.value)}
-          >
-            <option value="">— Auto-detected mapping —</option>
-            {savedProfiles.map((p) => (
-              <option key={p.name} value={p.name}>
-                {p.name}
-                {p.profile.bankName ? ` (${p.profile.bankName})` : ""}
-              </option>
-            ))}
-          </select>
+          {(id) => (
+            <Select
+              labelledBy={id}
+              value={selectedSavedName}
+              onChange={applySavedSelection}
+              options={[
+                { value: "", label: "— Auto-detected mapping —" },
+                ...savedProfiles.map((p) => ({
+                  value: p.name,
+                  label: `${p.name}${p.profile.bankName ? ` (${p.profile.bankName})` : ""}`,
+                })),
+              ]}
+            />
+          )}
         </Field>
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Date column">
-          <ColumnSelect value={edited.dateColumn} onChange={(v) => set("dateColumn", v)} />
+          {(id) => columnSelect(id, edited.dateColumn, (v) => set("dateColumn", v))}
         </Field>
 
         <Field label="Date format">
-          <select
-            className={selectClass}
-            value={edited.dateFormat}
-            onChange={(e) => set("dateFormat", e.target.value as AdaptProfile["dateFormat"])}
-          >
-            {DATE_FORMATS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
+          {(id) => (
+            <Select
+              labelledBy={id}
+              value={edited.dateFormat}
+              onChange={(v) => set("dateFormat", v as AdaptProfile["dateFormat"])}
+              options={DATE_FORMATS.map((f) => ({ value: f, label: f }))}
+            />
+          )}
         </Field>
 
         <Field label="Description column">
-          <ColumnSelect
-            value={edited.descriptionColumn}
-            onChange={(v) => set("descriptionColumn", v)}
-          />
+          {(id) => columnSelect(id, edited.descriptionColumn, (v) => set("descriptionColumn", v))}
         </Field>
 
         <Field label="Amount format">
-          <select
-            className={selectClass}
-            value={edited.amountConvention}
-            onChange={(e) =>
-              set("amountConvention", e.target.value as AdaptProfile["amountConvention"])
-            }
-          >
-            {CONVENTIONS.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+          {(id) => (
+            <Select
+              labelledBy={id}
+              value={edited.amountConvention}
+              onChange={(v) => set("amountConvention", v as AdaptProfile["amountConvention"])}
+              options={CONVENTIONS}
+            />
+          )}
         </Field>
 
         {isSplit ? (
           <>
             <Field label="Money in / credit column">
-              <ColumnSelect
-                value={edited.moneyInColumn}
-                onChange={(v) => set("moneyInColumn", v)}
-              />
+              {(id) => columnSelect(id, edited.moneyInColumn, (v) => set("moneyInColumn", v))}
             </Field>
             <Field label="Money out / debit column">
-              <ColumnSelect
-                value={edited.moneyOutColumn}
-                onChange={(v) => set("moneyOutColumn", v)}
-              />
+              {(id) => columnSelect(id, edited.moneyOutColumn, (v) => set("moneyOutColumn", v))}
             </Field>
           </>
         ) : (
           <Field label="Amount column">
-            <ColumnSelect value={edited.amountColumn} onChange={(v) => set("amountColumn", v)} />
+            {(id) => columnSelect(id, edited.amountColumn, (v) => set("amountColumn", v))}
           </Field>
         )}
 
         <Field label="Bank / account name">
-          <input
-            type="text"
-            className={selectClass}
-            value={edited.bankName ?? ""}
-            placeholder="e.g. Santander"
-            onChange={(e) => set("bankName", e.target.value)}
-          />
+          {(id) => (
+            <input
+              type="text"
+              aria-labelledby={id}
+              className={selectClass}
+              value={edited.bankName ?? ""}
+              placeholder="e.g. Santander"
+              onChange={(e) => set("bankName", e.target.value)}
+            />
+          )}
         </Field>
       </div>
 
