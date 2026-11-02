@@ -1,12 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
+import { Inter, IBM_Plex_Mono, Bricolage_Grotesque } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { AboutProvider } from '@/components/about-context';
-import { AboutButton } from '@/components/about-button';
-import { HomeButton } from '@/components/home-button';
+import { SiteHeader } from '@/components/site-header';
 import { Footer } from '@/components/footer';
 import { MotionProvider } from '@/components/motion-provider';
 import { SITE } from '@/lib/site';
@@ -17,13 +15,14 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-jetbrains-mono',
+const plexMono = IBM_Plex_Mono({
+  variable: '--font-plex-mono',
   subsets: ['latin'],
+  weight: ['400', '500'],
 });
 
-const spaceGrotesk = Space_Grotesk({
-  variable: '--font-space-grotesk',
+const bricolage = Bricolage_Grotesque({
+  variable: '--font-bricolage',
   subsets: ['latin'],
 });
 
@@ -65,7 +64,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable} font-sans antialiased`}
+        className={`${inter.variable} ${plexMono.variable} ${bricolage.variable} font-sans antialiased`}
       >
         <ThemeProvider
           attribute="class"
@@ -74,18 +73,7 @@ export default function RootLayout({
         >
           <MotionProvider>
             <AboutProvider>
-              <nav
-                aria-label="Site controls"
-                className="pointer-events-none absolute inset-x-0 top-4 z-50 flex items-start justify-between px-4"
-              >
-                <div className="pointer-events-auto">
-                  <HomeButton />
-                </div>
-                <div className="pointer-events-auto flex items-center gap-2">
-                  <AboutButton />
-                  <ThemeToggle />
-                </div>
-              </nav>
+              <SiteHeader />
               {children}
               <Footer />
             </AboutProvider>
