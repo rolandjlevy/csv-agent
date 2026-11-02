@@ -2,7 +2,7 @@ import { Term } from '@/components/term';
 
 export function Header() {
   return (
-    <header className="flex flex-col items-center gap-1 px-4 pt-20 pb-6 text-center sm:pt-16">
+    <header className="flex flex-col items-center gap-1 px-4 pt-10 pb-6 text-center">
       <div className="flex items-center gap-2.5 sm:gap-3">
         <svg
           viewBox="0 0 24 24"

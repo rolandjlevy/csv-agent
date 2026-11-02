@@ -28,7 +28,7 @@ export function ThemeToggle() {
             : 'Switch to dark mode'
           : 'Toggle theme'
       }
-      className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-border bg-bg-surface text-text-muted transition-colors hover:border-accent hover:text-accent"
+      className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-band-text transition-colors hover:bg-white/10 hover:text-white"
     >
       {mounted && (
         <svg

@@ -10,7 +10,7 @@ export function AboutButton() {
       type="button"
       onClick={open}
       aria-label="About Statement Sorter"
-      className="flex h-11 cursor-pointer items-center rounded-full border border-border bg-bg-surface px-4 text-sm font-medium text-text-muted transition-colors hover:border-accent hover:text-accent"
+      className="flex min-h-11 cursor-pointer items-center px-3 text-sm text-band-text transition-colors hover:text-white"
     >
       About
     </button>
