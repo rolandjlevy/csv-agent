@@ -17,7 +17,7 @@ export function AnswerCard({ text, stats }: AnswerCardProps) {
       transition={{ type: "spring", stiffness: 280, damping: 26 }}
       className="rounded-lg border border-border-subtle border-l-2 border-l-accent bg-bg-surface px-6 py-5"
     >
-      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-accent">💬 Answer</p>
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-accent"><span aria-hidden="true">💬</span> Answer</p>
       <div className="text-[15px] leading-relaxed text-text break-words">
         <MarkdownLite text={text} />
       </div>

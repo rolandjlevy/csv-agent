@@ -184,7 +184,7 @@ export default function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 className="rounded-lg border border-error/40 bg-error/10 px-4 py-3 text-sm text-error"
               >
-                ⚠️ {agent.error}
+                <span aria-hidden="true">⚠️</span> {agent.error}
               </motion.div>
             )}
 

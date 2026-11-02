@@ -8,7 +8,7 @@ const BENEFITS = [
     body: "Set a client up once and the next month's file is done in a click. Saved in this browser.",
   },
   {
-    title: "Most UK banks, no fuss",
+    title: "Built for UK bank exports",
     body: "It works the format out itself, so there's no template to wait for.",
   },
 ];
