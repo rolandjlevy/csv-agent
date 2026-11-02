@@ -1,6 +1,4 @@
 import { Term } from '@/components/term';
-import { AboutLink } from '@/components/about-link';
-import { SITE } from '@/lib/site';
 
 export function Header() {
   return (
@@ -23,28 +21,22 @@ export function Header() {
         </h1>
       </div>
       <p className="mt-1 text-base font-medium text-text sm:text-lg">
-        Turn any bank CSV into a categorised{' '}
+        Turn a UK bank CSV into a categorised{' '}
         <Term detail="Profit & Loss — the report that separates real income and costs from balance-sheet noise like transfers and drawings.">
           P&amp;L
         </Term>
       </p>
 
       <p className="mt-3 max-w-xl text-sm leading-relaxed text-text-muted">
-        Reads a statement from most UK banks, in any layout, sorts every
-        transaction into{' '}
+        Drop in a bank CSV and get every transaction sorted into{' '}
         <Term detail="Income, cost of sales and overheads — not just a pile of categorised rows.">
           clear categories
         </Term>
-        , and flags anything it&rsquo;s unsure of. Then export to{' '}
+        , ready to export to{' '}
         <Term detail="The cloud accounting platforms most UK bookkeepers already use.">
           Xero, QuickBooks or FreeAgent
         </Term>
         .
-      </p>
-
-      <p className="mt-3 text-sm text-text-muted">
-        A working demo of an AI agent, built by{' '}
-        <AboutLink>{SITE.maker}</AboutLink>.
       </p>
     </header>
   );

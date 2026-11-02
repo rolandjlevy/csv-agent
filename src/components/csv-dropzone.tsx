@@ -87,14 +87,14 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
 
       <div className="flex w-full items-center gap-3 text-xs text-text-faint">
         <span className="h-px flex-1 bg-border-subtle" />
-        or use your own file
+        or try your own file
         <span className="h-px flex-1 bg-border-subtle" />
       </div>
 
       <div
         {...getRootProps()}
-        className={`dropzone-idle w-full cursor-pointer rounded-xl border-2 border-dashed bg-accent-muted transition-colors duration-300 ${
-          isDragActive ? "border-accent bg-accent/20" : "border-border hover:border-accent"
+        className={`dropzone-idle w-full cursor-pointer rounded-xl border-2 border-dashed bg-bg-surface transition-colors duration-300 ${
+          isDragActive ? "border-accent bg-accent-muted" : "border-border hover:border-accent"
         } ${isLoading ? "pointer-events-none opacity-60" : ""}`}
       >
         <input {...getInputProps({ "aria-label": "Choose a CSV or TSV file" })} disabled={isLoading} />
@@ -137,17 +137,16 @@ export function CsvDropzone({ onFileAccepted, onSampleClick, isLoading }: CsvDro
                 ? "Drop it here"
                 : "Drop a CSV here or tap to browse"}
           </p>
-          <p className="text-xs text-text-faint">.csv or .tsv · max 3.5MB</p>
-          <p className="mt-1 text-xs font-medium text-text">
-            Demo only: please don&rsquo;t upload real client data.
-          </p>
+          <p className="text-[13px] text-text-muted">.csv or .tsv · max 3.5MB</p>
+          
         </motion.div>
       </div>
 
-      <p className="text-center text-xs leading-relaxed text-text-faint">
-        Everything you run, sample or upload, is sent to our server and to
-        Anthropic&rsquo;s AI to be read. The sample data is fictional.{' '}
-        <a href="/privacy" className="underline underline-offset-4 hover:text-text-muted">
+      <p className="w-full rounded-lg border border-border-subtle bg-bg-elevated px-4 py-3 text-center text-[13px] leading-relaxed text-text-muted">
+        <span className="font-medium text-text">Demo.</span> Everything you run, sample or
+        upload, is sent to our server and to Anthropic&rsquo;s AI to be read. Please use
+        fictional or anonymised data, not real client files.{' '}
+        <a href="/privacy" className="underline underline-offset-4 hover:text-text">
           Privacy
         </a>
       </p>
