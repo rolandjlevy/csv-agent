@@ -6,7 +6,8 @@ import { useAgent } from "@/hooks/use-agent";
 import { Hero } from "@/components/hero";
 import { DemoNotice, OwnFileCard, useCsvIntake } from "@/components/csv-dropzone";
 import { LedgerDemo } from "@/components/ledger-demo";
-import { CsvPreview } from "@/components/csv-preview";
+import { FileSheet } from "@/components/file-sheet";
+import { PageBand } from "@/components/page-band";
 import { ColumnConfirmPanel } from "@/components/column-confirm-panel";
 import { RecipeBanner } from "@/components/recipe-banner";
 import { QuestionPanel } from "@/components/question-panel";
@@ -33,6 +34,9 @@ const fadeOnly = {
   exit: { opacity: 0 },
   transition: { duration: 0.25, ease: "easeOut" as const },
 };
+
+// File names the sample buttons load (see loadSample in use-agent).
+const SAMPLE_FILES = ["transactions.csv", "sample-messy.csv"];
 
 // Smooth scrolling is skipped for visitors who ask their device to reduce motion.
 function scrollBehavior(): ScrollBehavior {
@@ -102,62 +106,52 @@ export default function Home() {
         )}
 
         {isConfirmState && agent.profile && agent.rawPreview && (
-          <motion.main
-            key="confirm"
-            {...stateTransition}
-            className="mx-auto flex max-w-3xl flex-col gap-6 px-4 pb-16 pt-10"
-          >
-            <h1 className="sr-only">Statement Sorter</h1>
-            {agent.savedProfileMatch && !recipeDismissed ? (
-              <RecipeBanner
-                name={agent.savedProfileMatch.name}
-                fileName={agent.fileName}
-                onRun={agent.runRecipe}
-                onReview={() => setRecipeDismissed(true)}
-              />
-            ) : (
-              <ColumnConfirmPanel
-                fileName={agent.fileName}
-                profile={agent.profile}
-                rawPreview={agent.rawPreview}
-                savedProfileMatch={agent.savedProfileMatch}
-                onConfirm={agent.confirmProfile}
-                onCancel={agent.reset}
-              />
-            )}
-          </motion.main>
+          <motion.div key="confirm" {...fadeOnly}>
+            <PageBand title="We've read your file">
+              Check how the columns were read below, then continue.
+            </PageBand>
+            <main className="relative mx-auto -mt-16 flex max-w-3xl flex-col gap-6 px-6 pb-16 md:-mt-20">
+              {agent.savedProfileMatch && !recipeDismissed ? (
+                <RecipeBanner
+                  name={agent.savedProfileMatch.name}
+                  fileName={agent.fileName}
+                  onRun={agent.runRecipe}
+                  onReview={() => setRecipeDismissed(true)}
+                />
+              ) : (
+                <ColumnConfirmPanel
+                  fileName={agent.fileName}
+                  profile={agent.profile}
+                  rawPreview={agent.rawPreview}
+                  savedProfileMatch={agent.savedProfileMatch}
+                  onConfirm={agent.confirmProfile}
+                  onCancel={agent.reset}
+                />
+              )}
+            </main>
+          </motion.div>
         )}
 
         {isAskState && agent.csvInfo && (
-          <motion.main
-            key="ask"
-            {...stateTransition}
-            className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-16 pt-10 md:flex-row"
-          >
-            <h1 className="sr-only">Statement Sorter</h1>
-            <aside className="flex w-full flex-col gap-4 md:w-[46%]">
-              <div className="rounded-lg border border-border-subtle bg-bg-surface p-4">
-                <p className="truncate font-mono text-sm text-text">{agent.csvInfo.name}</p>
-                <p className="mt-1 text-xs text-text-faint">
-                  {agent.csvInfo.rows} rows · {agent.csvInfo.columns.length} columns
-                </p>
+          <motion.div key="ask" {...fadeOnly}>
+            <PageBand title={SAMPLE_FILES.includes(agent.csvInfo.name) ? "Your sample is ready" : "Your file is ready"}>
+              Ask a question about your {agent.csvInfo.rows} rows, or change the file.
+            </PageBand>
+            <main className="relative mx-auto -mt-16 flex max-w-5xl flex-col items-start gap-8 px-6 pb-16 md:-mt-20 lg:flex-row">
+              <div className="w-full min-w-0 lg:flex-[1.15_1_440px]">
+                <FileSheet
+                  name={agent.csvInfo.name}
+                  totalRows={agent.csvInfo.rows}
+                  columns={agent.csvInfo.columns}
+                  rows={agent.previewRows}
+                  onChangeFile={agent.reset}
+                />
               </div>
-
-              <CsvPreview columns={agent.csvInfo.columns} rows={agent.previewRows} />
-
-              <button
-                type="button"
-                onClick={agent.reset}
-                className="min-h-11 self-start text-sm text-text-muted underline-offset-4 hover:text-accent hover:underline"
-              >
-                ← Change file
-              </button>
-            </aside>
-
-            <section className="flex-1">
-              <QuestionPanel onSubmit={agent.askQuestion} />
-            </section>
-          </motion.main>
+              <div className="w-full min-w-0 lg:flex-1 lg:basis-[400px]">
+                <QuestionPanel onSubmit={agent.askQuestion} />
+              </div>
+            </main>
+          </motion.div>
         )}
 
         {isWorkingState && (

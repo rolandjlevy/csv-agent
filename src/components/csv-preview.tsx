@@ -1,53 +1,88 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
+import { categoryTone } from "@/lib/category-tone";
 
 interface CsvPreviewProps {
   columns: string[];
   rows: Record<string, string>[];
 }
 
-// Tints cells that look like signed numbers (e.g. transaction amounts) —
-// negative red-ish, positive green-ish — purely cosmetic, doesn't assume
-// anything about column names so it's safe for any CSV shape.
-function numericToneClass(value: string | undefined): string {
+// The columns the app produces once a file has been adapted. When all five are
+// present the preview can show a stacked list on phones; any other shape just
+// gets the table in a scrolling box.
+const CANONICAL = ["Date", "Description", "Amount", "Category", "Bank"];
+
+// Signed numbers read green or red; anything else stays neutral. Purely
+// cosmetic, and independent of column names, so it is safe for any CSV shape.
+function amountTone(value: string | undefined): string {
   if (!value) return "text-text-muted";
   const cleaned = value.replace(/[£$,]/g, "").trim();
   if (!/^-?\d+(\.\d+)?$/.test(cleaned)) return "text-text-muted";
   const num = parseFloat(cleaned);
   if (num < 0) return "text-error";
-  if (num > 0) return "text-accent";
+  if (num > 0) return "text-money";
   return "text-text-muted";
 }
 
+function formatAmount(value: string | undefined): string {
+  if (!value) return "";
+  const cleaned = value.replace(/[£$,]/g, "").trim();
+  if (!/^-?\d+(\.\d+)?$/.test(cleaned)) return value;
+  const num = parseFloat(cleaned);
+  const body = Math.abs(num).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return num < 0 ? `−${body}` : `+${body}`;
+}
+
+function CategoryChip({ value }: { value: string }) {
+  // The confirm screen shows "—" because categories are only assigned when a
+  // question is asked; a placeholder should not look like a category.
+  if (!/[\p{L}\p{N}]/u.test(value)) return <span className="text-text-faint">{value}</span>;
+  return (
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[13px] font-medium ${categoryTone(value)}`}>
+      {value}
+    </span>
+  );
+}
+
 export function CsvPreview({ columns, rows }: CsvPreviewProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [overflowing, setOverflowing] = useState(false);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const checkOverflow = () => setOverflowing(el.scrollWidth > el.clientWidth + 1);
-    checkOverflow();
-
-    const observer = new ResizeObserver(checkOverflow);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [columns, rows]);
+  const canonical = CANONICAL.every((c) => columns.includes(c));
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-border-subtle bg-bg-surface">
-      <div className="h-[3px] bg-gradient-to-r from-accent via-tool-blue to-transparent" />
+    <>
+      {canonical && (
+        <ul aria-label="Preview of your file" className="border-t border-border-subtle sm:hidden">
+          {rows.map((row, i) => (
+            <li key={i} className="border-b border-border-subtle px-[18px] py-3 last:border-b-0">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 break-words font-mono text-[12.5px] text-text">{row.Description}</span>
+                <span className={`shrink-0 font-mono text-[13px] font-medium ${amountTone(row.Amount)}`}>
+                  {formatAmount(row.Amount)}
+                </span>
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-text-muted">
+                <span>{row.Date}</span>
+                <CategoryChip value={row.Category} />
+                <span>{row.Bank}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
-      <div ref={scrollRef} className="overflow-x-auto" tabIndex={0} role="region" aria-label="Preview of your file">
-        <table className="w-full text-left text-xs">
+      <div
+        className={`overflow-x-auto ${canonical ? "hidden sm:block" : ""}`}
+        tabIndex={0}
+        role="region"
+        aria-label="Preview of your file"
+      >
+        <table className="w-full border-collapse text-left text-[13px]">
           <thead>
-            <tr className="border-b border-border-subtle bg-bg-elevated/40">
+            <tr className="border-y border-border bg-bg-elevated">
               {columns.map((col) => (
                 <th
                   key={col}
-                  className="whitespace-nowrap px-3 py-2 font-mono text-[11px] font-medium uppercase tracking-wide text-text-faint"
+                  scope="col"
+                  className={`whitespace-nowrap px-2.5 py-2.5 text-xs font-semibold text-text-muted ${
+                    col === "Amount" ? "text-right" : ""
+                  }`}
                 >
                   {col}
                 </th>
@@ -56,27 +91,42 @@ export function CsvPreview({ columns, rows }: CsvPreviewProps) {
           </thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr
-                key={i}
-                className="border-b border-border-subtle transition-colors last:border-0 odd:bg-transparent even:bg-bg-elevated/30 hover:bg-bg-elevated/70"
-              >
-                {columns.map((col) => (
-                  <td
-                    key={col}
-                    className={`whitespace-nowrap px-3 py-2 ${numericToneClass(row[col])}`}
-                  >
-                    {row[col]}
-                  </td>
-                ))}
+              <tr key={i} className="border-b border-border-subtle last:border-0">
+                {columns.map((col) => {
+                  const value = row[col];
+                  if (col === "Category") {
+                    return (
+                      <td key={col} className="whitespace-nowrap px-2.5 py-3">
+                        {value ? <CategoryChip value={value} /> : null}
+                      </td>
+                    );
+                  }
+                  if (col === "Amount") {
+                    return (
+                      <td
+                        key={col}
+                        className={`whitespace-nowrap px-2.5 py-3 text-right font-mono font-medium ${amountTone(value)}`}
+                      >
+                        {formatAmount(value)}
+                      </td>
+                    );
+                  }
+                  return (
+                    <td
+                      key={col}
+                      className={`px-2.5 py-3 ${
+                        col === "Description" ? "font-mono text-xs text-text" : "whitespace-nowrap text-text-muted"
+                      }`}
+                    >
+                      {value}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {overflowing && (
-        <div className="pointer-events-none absolute inset-y-[3px] right-0 w-10 bg-gradient-to-l from-bg-surface to-transparent" />
-      )}
-    </div>
+    </>
   );
 }
