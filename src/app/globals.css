@@ -14,6 +14,7 @@
   --accent: #0b5c73;
   --accent-muted: rgba(11, 92, 115, 0.08);
   --money: #166534;
+  --tint: #e2f0f3;
   /* Hero band and footer: the deep teal that frames the light page. */
   --band: #063846;
   --band-text: #cfe6ec;
@@ -46,6 +47,7 @@
   --thinking-bg: rgba(245, 158, 11, 0.06);
   --error: #ef4444;
   --money: #4ade80;
+  --tint: #10202a;
   --band: #04242e;
   --band-text: #cfe6ec;
   --band-faint: #a8cbd6;
@@ -71,6 +73,7 @@
   --color-thinking-bg: var(--thinking-bg);
   --color-error: var(--error);
   --color-money: var(--money);
+  --color-tint: var(--tint);
   --color-band: var(--band);
   --color-band-text: var(--band-text);
   --color-band-faint: var(--band-faint);
@@ -137,4 +140,30 @@ body {
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 999px;
+}
+
+/* Hero ledger: one load-time moment where each row gets sorted. */
+@keyframes ledger-sort {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* "backwards" holds each tag at the "from" frame during its delay, then it
+   settles on its normal (visible) style, so nothing stays hidden if the
+   animation never runs. */
+.ledger-tag {
+  animation: ledger-sort 0.45s ease-out backwards;
+  animation-delay: calc(0.5s + var(--row) * 0.35s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ledger-tag {
+    animation: none;
+  }
 }

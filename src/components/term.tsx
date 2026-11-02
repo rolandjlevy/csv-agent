@@ -8,12 +8,14 @@ interface TermProps {
   children: React.ReactNode;
   /** The detail revealed on hover/focus. */
   detail: string;
+  /** Set when the term sits on the dark teal band, so it reads white. */
+  onBand?: boolean;
 }
 
 // An inline keyword with a styled popover that reveals more detail on hover or
 // keyboard focus. Used in the homepage intro line to keep the sentence short
 // while still letting curious visitors dig into each concept.
-export function Term({ children, detail }: TermProps) {
+export function Term({ children, detail, onBand = false }: TermProps) {
   const [open, setOpen] = useState(false);
   const [nudge, setNudge] = useState(0);
   const tooltipRef = useRef<HTMLSpanElement>(null);
@@ -58,7 +60,11 @@ export function Term({ children, detail }: TermProps) {
       <span
         tabIndex={0}
         aria-describedby={open ? tooltipId : undefined}
-        className="cursor-help font-medium text-text underline decoration-dotted decoration-text-faint underline-offset-4 transition-colors hover:text-accent hover:decoration-accent focus:text-accent"
+        className={`cursor-help font-medium underline decoration-dotted underline-offset-4 transition-colors ${
+          onBand
+            ? "text-white decoration-white/70 hover:decoration-white"
+            : "text-text decoration-text-faint hover:text-accent hover:decoration-accent focus:text-accent"
+        }`}
       >
         {children}
       </span>
@@ -74,7 +80,11 @@ export function Term({ children, detail }: TermProps) {
             exit={{ opacity: 0, y: 4 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
             style={{ marginLeft: nudge }}
-            className="absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-lg border border-border bg-bg-elevated px-3 py-2 text-left text-xs font-normal leading-relaxed text-text-muted shadow-lg"
+            className={`absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-lg px-3 py-2 text-left text-xs font-normal leading-relaxed shadow-lg ${
+              onBand
+                ? "bg-[#0f1b33] text-[#e6edf7]"
+                : "border border-border bg-bg-elevated text-text-muted"
+            }`}
           >
             {detail}
           </motion.span>
