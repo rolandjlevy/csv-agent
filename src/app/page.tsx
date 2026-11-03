@@ -180,7 +180,18 @@ export default function Home() {
                 </p>
 
                 {agent.status === "running" && (
-                  <div className="h-44 animate-pulse rounded-lg bg-bg-surface shadow-[0_0_0_1px_var(--color-border)]" />
+                  // The card itself stays opaque and still: it overlaps the teal band, and
+                  // pulsing its opacity would let the band show through. Only the
+                  // placeholder bars inside it pulse. Same padding and shadow as AnswerCard.
+                  <div
+                    aria-hidden="true"
+                    className="flex flex-col gap-3 rounded-lg bg-bg-surface p-6 shadow-[0_0_0_1px_var(--color-border),0_4px_12px_-8px_rgba(2,20,28,0.16)] md:p-8"
+                  >
+                    <div className="h-4 w-11/12 animate-pulse rounded bg-bg-elevated" />
+                    <div className="h-4 w-full animate-pulse rounded bg-bg-elevated" />
+                    <div className="h-4 w-4/5 animate-pulse rounded bg-bg-elevated" />
+                    <div className="mt-4 h-24 animate-pulse rounded bg-bg-elevated" />
+                  </div>
                 )}
 
                 {agent.status === "done" && agent.answer && <AnswerCard text={agent.answer} />}
