@@ -205,9 +205,10 @@ export default function Home() {
                 )}
 
                 {agent.error && (
+                  // Opaque, not a translucent red tint: it overlaps the teal band.
                   <div
                     role="alert"
-                    className="rounded-lg border border-error/40 bg-error/10 px-5 py-4 text-sm leading-relaxed text-error"
+                    className="rounded-lg border border-error/50 bg-bg-surface px-5 py-4 text-sm leading-relaxed text-error"
                   >
                     {agent.error}
                   </div>

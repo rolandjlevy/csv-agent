@@ -23,8 +23,8 @@ interface ColumnConfirmPanelProps {
 
 const DATE_FORMATS: AdaptProfile["dateFormat"][] = ["DD/MM/YYYY", "MM/DD/YYYY", "YYYY-MM-DD"];
 const CONVENTIONS: { value: AdaptProfile["amountConvention"]; label: string }[] = [
-  { value: "split", label: "Separate money-in / money-out columns" },
-  { value: "debit_credit", label: "Separate credit / debit columns" },
+  { value: "split", label: "Money in / money out columns" },
+  { value: "debit_credit", label: "Credit / debit columns" },
   { value: "signed", label: "One signed amount column (+/−)" },
 ];
 
