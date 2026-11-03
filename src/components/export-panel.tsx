@@ -6,6 +6,7 @@ import { DEFAULT_XERO_ACCOUNT_CODES } from '@/lib/xero-accounts';
 import { DEFAULT_QUICKBOOKS_ACCOUNT_NAMES } from '@/lib/quickbooks-accounts';
 import { DEFAULT_FREEAGENT_ACCOUNT_NAMES } from '@/lib/freeagent-accounts';
 import { getAccountCodes, mergeAccountCodes } from '@/lib/saved-profiles';
+import { CARD } from '@/lib/card-style';
 import { Term } from '@/components/term';
 
 interface ExportPanelProps {
@@ -55,7 +56,7 @@ const FORMAT_CONFIG: Record<Format, FormatConfig> = {
 const FORMATS = Object.keys(FORMAT_CONFIG) as Format[];
 
 const inputClass =
-  'w-24 rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text focus:border-accent';
+  'min-h-10 w-28 rounded-lg border border-border bg-bg-surface px-3 text-sm text-text focus:border-accent';
 
 // Triggers a browser download of a CSV string with no server round-trip for
 // the file itself (the mapping already happened server-side; this just
@@ -161,28 +162,30 @@ export function ExportPanel({
     }
   };
 
+  const rows = 'divide-y divide-border-subtle border-t border-border-subtle';
+
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-bg-surface p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium text-text">
-          📤 Export
+    <section aria-labelledby="export-title" className={`flex flex-col gap-5 ${CARD}`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 id="export-title" className="font-display text-[22px] font-semibold tracking-tight text-text">
+            Export
+          </h2>
           {activeProfileName && config.supportsCoding && (
-            <span className="font-normal text-text-faint">
-              {' '}
-              — codes save to your &ldquo;{activeProfileName}&rdquo; recipe
-            </span>
+            <p className="mt-1 text-sm text-text-muted">
+              Codes save to your &ldquo;{activeProfileName}&rdquo; recipe.
+            </p>
           )}
-        </p>
-        <div className="flex rounded-lg border border-border-subtle p-0.5">
+        </div>
+        <div role="group" aria-label="Accounting system" className="flex rounded-full bg-bg-elevated p-1">
           {FORMATS.map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFormat(f)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                format === f
-                  ? 'bg-accent text-bg'
-                  : 'text-text-muted hover:text-text'
+              aria-pressed={format === f}
+              className={`min-h-9 cursor-pointer rounded-full px-4 text-sm font-medium transition-colors ${
+                format === f ? 'bg-accent text-bg' : 'text-text-muted hover:text-text'
               }`}
             >
               {FORMAT_CONFIG[f].label}
@@ -192,17 +195,13 @@ export function ExportPanel({
       </div>
 
       {config.supportsCoding ? (
-        <ul className="flex flex-col gap-2">
+        <ul className={rows}>
           {categories.map((category) => (
-            <li
-              key={category}
-              className="flex items-center justify-between gap-3"
-            >
-              <span className="truncate text-xs text-text-muted">
-                {category}
-              </span>
+            <li key={category} className="flex items-center justify-between gap-3 py-2">
+              <span className="truncate text-sm text-text">{category}</span>
               <input
                 type="text"
+                aria-label={`${config.label} account code for ${category}`}
                 className={`${inputClass} ${!codes[category]?.trim() ? 'border-error/50' : ''}`}
                 placeholder="code"
                 value={codes[category] ?? ''}
@@ -212,22 +211,13 @@ export function ExportPanel({
           ))}
         </ul>
       ) : (
-        <div className="flex flex-col gap-2">
-          {config.note && (
-            <p className="text-xs text-text-faint">{config.note}</p>
-          )}
-          <ul className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3">
+          {config.note && <p className="text-sm leading-relaxed text-text-muted">{config.note}</p>}
+          <ul className={rows}>
             {categories.map((category) => (
-              <li
-                key={category}
-                className="flex items-center justify-between gap-3"
-              >
-                <span className="truncate text-xs text-text-muted">
-                  {category}
-                </span>
-                <span className="text-xs text-text-faint">
-                  {config.defaults[category] ?? '—'}
-                </span>
+              <li key={category} className="flex items-center justify-between gap-3 py-2.5">
+                <span className="truncate text-sm text-text">{category}</span>
+                <span className="text-sm text-text-muted">{config.defaults[category] ?? '\u2014'}</span>
               </li>
             ))}
           </ul>
@@ -235,7 +225,7 @@ export function ExportPanel({
       )}
 
       {config.supportsCoding && unmapped.length > 0 && (
-        <p className="text-xs text-error">
+        <p className="text-sm leading-relaxed text-error">
           Add an{' '}
           <Term
             detail={`These post to your own control accounts in ${config.label} — accounts specific to your organisation, like your VAT control account or director's loan account. Find the code under your ${config.label} Chart of Accounts, then enter it above.`}
@@ -245,16 +235,20 @@ export function ExportPanel({
           for: {unmapped.join(', ')} before downloading.
         </p>
       )}
-      {downloadError && <p className="text-xs text-error">{downloadError}</p>}
+      {downloadError && (
+        <p role="alert" className="text-sm text-error">
+          {downloadError}
+        </p>
+      )}
 
       <button
         type="button"
         onClick={handleDownload}
         disabled={!canDownload}
-        className="self-start rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="min-h-12 cursor-pointer self-start rounded-full bg-cta px-6 text-[15px] font-semibold text-cta-text transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {downloading ? 'Preparing…' : `Download for ${config.label}`}
       </button>
-    </div>
+    </section>
   );
 }
