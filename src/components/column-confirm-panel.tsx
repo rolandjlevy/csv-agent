@@ -1,7 +1,6 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import type { AdaptProfile } from "@/types/agent";
 import {
   CANONICAL_COLUMNS,
@@ -112,11 +111,7 @@ export function ColumnConfirmPanel({
   const isSplit = edited.amountConvention !== "signed";
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col gap-5 rounded-lg border border-border-subtle bg-bg-surface p-5"
-    >
+    <div className="flex flex-col gap-5 rounded-lg border border-border-subtle bg-bg-surface p-5">
       <div>
         <h2 className="text-lg font-semibold text-text">Confirm the columns</h2>
         <p className="mt-1 text-sm text-text-muted">
@@ -258,6 +253,6 @@ export function ColumnConfirmPanel({
           Looks good — continue →
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
