@@ -36,7 +36,7 @@ function CategoryChip({ value }: { value: string }) {
   // question is asked; a placeholder should not look like a category.
   if (!/[\p{L}\p{N}]/u.test(value)) return <span className="text-text-faint">{value}</span>;
   return (
-    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[13px] font-medium ${categoryTone(value)}`}>
+    <span className={`inline-block rounded-full px-2 py-0.5 text-[13px] font-medium ${categoryTone(value)}`}>
       {value}
     </span>
   );
@@ -80,7 +80,7 @@ export function CsvPreview({ columns, rows }: CsvPreviewProps) {
                 <th
                   key={col}
                   scope="col"
-                  className={`whitespace-nowrap px-2.5 py-2.5 text-xs font-semibold text-text-muted ${
+                  className={`whitespace-nowrap px-2 py-2.5 text-xs font-semibold text-text-muted ${
                     col === "Amount" ? "text-right" : ""
                   }`}
                 >
@@ -96,7 +96,7 @@ export function CsvPreview({ columns, rows }: CsvPreviewProps) {
                   const value = row[col];
                   if (col === "Category") {
                     return (
-                      <td key={col} className="whitespace-nowrap px-2.5 py-3">
+                      <td key={col} className="whitespace-nowrap px-2 py-3">
                         {value ? <CategoryChip value={value} /> : null}
                       </td>
                     );
@@ -105,7 +105,7 @@ export function CsvPreview({ columns, rows }: CsvPreviewProps) {
                     return (
                       <td
                         key={col}
-                        className={`whitespace-nowrap px-2.5 py-3 text-right font-mono font-medium ${amountTone(value)}`}
+                        className={`whitespace-nowrap px-2 py-3 text-right font-mono font-medium ${amountTone(value)}`}
                       >
                         {formatAmount(value)}
                       </td>
@@ -114,7 +114,7 @@ export function CsvPreview({ columns, rows }: CsvPreviewProps) {
                   return (
                     <td
                       key={col}
-                      className={`px-2.5 py-3 ${
+                      className={`px-2 py-3 ${
                         col === "Description" ? "font-mono text-xs text-text" : "whitespace-nowrap text-text-muted"
                       }`}
                     >
