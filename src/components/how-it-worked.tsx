@@ -79,6 +79,9 @@ export function HowItWorked({ steps, stats, status }: HowItWorkedProps) {
   const lastTurn = items.length ? items[items.length - 1].turn : 1;
   const finalRow = status === "done";
 
+  // A run that failed before doing anything has nothing to list.
+  if (items.length === 0 && status !== "running" && !finalRow) return null;
+
   return (
     <section
       aria-labelledby="how-worked-title"

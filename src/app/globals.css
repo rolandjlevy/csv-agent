@@ -107,26 +107,11 @@ body {
   outline-color: var(--color-cta);
 }
 
-@keyframes tool-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 var(--color-tool-blue-bg);
-  }
-  50% {
-    box-shadow: 0 0 0 4px var(--color-tool-blue-bg);
-  }
-}
-
-.tool-card-pending {
-  animation: tool-pulse 1.6s ease-in-out infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
 
-  .tool-card-pending,
   .animate-pulse {
     animation: none;
   }
