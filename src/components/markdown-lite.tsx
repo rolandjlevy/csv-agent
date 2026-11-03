@@ -32,7 +32,7 @@ export function renderInline(text: string): ReactNode {
   return nodes;
 }
 
-type LineKind = "heading" | "table" | "bullet" | "quote" | "hr" | "blank" | "text";
+type LineKind = "heading" | "table" | "bullet" | "number" | "quote" | "hr" | "blank" | "text";
 
 function classifyLine(line: string): LineKind {
   const trimmed = line.trim();
@@ -40,6 +40,7 @@ function classifyLine(line: string): LineKind {
   if (/^#{1,6}\s+/.test(trimmed)) return "heading";
   if (trimmed.startsWith("|")) return "table";
   if (/^[-*]\s+/.test(trimmed)) return "bullet";
+  if (/^\d+[.)]\s+/.test(trimmed)) return "number";
   if (/^>\s?/.test(trimmed)) return "quote";
   if (/^[-*]{3,}$/.test(trimmed)) return "hr";
   return "text";
@@ -80,6 +81,11 @@ function groupLines(text: string): LineBlock[] {
   return blocks;
 }
 
+// Cells that are just a figure (£1,234.50, -3, 12%) line up on the right in
+// mono, so a column of amounts reads as a column.
+const FIGURE = /^[−+-]?[£$€]?\d[\d,]*(\.\d+)?%?$/;
+const isFigure = (cell: string) => FIGURE.test(cell.replace(/\*\*/g, "").trim());
+
 function renderTable(lines: string[], key: number): ReactNode {
   const rows = lines.map((line) =>
     line
@@ -93,14 +99,20 @@ function renderTable(lines: string[], key: number): ReactNode {
 
   const [headerRow, ...rest] = rows;
   const bodyRows = rest.filter((row) => !isSeparatorRow(row));
+  // A column is right-aligned when every body cell in it is a figure.
+  const numeric = headerRow.map((_, j) => bodyRows.length > 0 && bodyRows.every((row) => isFigure(row[j] ?? "")));
 
   return (
     <div key={key} className="overflow-x-auto rounded-md border border-border-subtle">
-      <table className="w-full text-left text-xs">
+      <table className="w-full border-collapse text-left text-[13px]">
         <thead>
-          <tr className="border-b border-border-subtle bg-bg-elevated">
+          <tr className="border-b border-border bg-bg-elevated">
             {headerRow.map((cell, i) => (
-              <th key={i} className="whitespace-nowrap px-3 py-2 font-medium text-text-faint">
+              <th
+                key={i}
+                scope="col"
+                className={`whitespace-nowrap px-3 py-2.5 text-xs font-semibold text-text-muted ${numeric[i] ? "text-right" : ""}`}
+              >
                 {renderInline(cell)}
               </th>
             ))}
@@ -110,7 +122,10 @@ function renderTable(lines: string[], key: number): ReactNode {
           {bodyRows.map((row, i) => (
             <tr key={i} className="border-b border-border-subtle last:border-0">
               {row.map((cell, j) => (
-                <td key={j} className="whitespace-nowrap px-3 py-2 text-text-muted">
+                <td
+                  key={j}
+                  className={`px-3 py-2.5 text-text ${numeric[j] ? "whitespace-nowrap text-right font-mono tabular-nums" : ""}`}
+                >
                   {renderInline(cell)}
                 </td>
               ))}
@@ -122,16 +137,26 @@ function renderTable(lines: string[], key: number): ReactNode {
   );
 }
 
+// Answers often open a heading with an emoji (a calendar, a warning sign). The
+// design uses none, so a leading one is dropped from the heading text.
+const LEADING_EMOJI = /^[\p{Extended_Pictographic}\p{Emoji_Presentation}\uFE0F\u200D\s]+/u;
+
 function renderHeading(line: string, key: number): ReactNode {
   const match = line.trim().match(/^(#{1,6})\s+(.*)/);
   if (!match) return null;
   const level = match[1].length;
-  const className =
-    level <= 2 ? "text-base font-semibold text-text" : "text-sm font-semibold text-text";
-  return (
-    <p key={key} className={className}>
-      {renderInline(match[2])}
-    </p>
+  const text = match[2].replace(LEADING_EMOJI, "");
+  // Sections after the first get a hairline above them.
+  const base = "font-display text-[19px] font-semibold tracking-tight text-text";
+  const className = key === 0 ? base : `${base} mt-3 border-t border-border-subtle pt-6`;
+  return level <= 2 ? (
+    <h2 key={key} className={className}>
+      {renderInline(text)}
+    </h2>
+  ) : (
+    <h3 key={key} className={className}>
+      {renderInline(text)}
+    </h3>
   );
 }
 
@@ -145,11 +170,20 @@ function renderBlock(block: LineBlock, key: number): ReactNode {
 
     case "bullet":
       return (
-        <ul key={key} className="list-disc space-y-1 pl-5">
+        <ul key={key} className="list-disc space-y-1.5 pl-5 marker:text-accent">
           {block.lines.map((line, i) => (
             <li key={i}>{renderInline(line.trim().replace(/^[-*]\s+/, ""))}</li>
           ))}
         </ul>
+      );
+
+    case "number":
+      return (
+        <ol key={key} className="list-decimal space-y-1.5 pl-6 marker:font-mono marker:text-text-muted">
+          {block.lines.map((line, i) => (
+            <li key={i}>{renderInline(line.trim().replace(/^\d+[.)]\s+/, ""))}</li>
+          ))}
+        </ol>
       );
 
     case "quote":
@@ -182,9 +216,12 @@ function renderBlock(block: LineBlock, key: number): ReactNode {
 }
 
 export function MarkdownLite({ text, className }: { text: string; className?: string }) {
-  const blocks = groupLines(text);
+  // A rule directly before a heading would double up with the heading's own
+  // top border, so it is dropped.
+  const grouped = groupLines(text);
+  const blocks = grouped.filter((b, i) => !(b.kind === "hr" && grouped[i + 1]?.kind === "heading"));
   return (
-    <div className={className ?? "flex flex-col gap-3"}>
+    <div className={className ?? "flex flex-col gap-4"}>
       {blocks.map((block, i) => renderBlock(block, i))}
     </div>
   );
