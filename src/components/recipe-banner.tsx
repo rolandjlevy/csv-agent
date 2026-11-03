@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 
 interface RecipeBannerProps {
   name: string;
@@ -16,11 +15,8 @@ interface RecipeBannerProps {
 // same match.
 export function RecipeBanner({ name, fileName, onRun, onReview }: RecipeBannerProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center gap-4 rounded-lg border border-accent/40 bg-accent-muted p-6 text-center"
-    >
+    // Opaque (bg-tint, not a translucent tint): this card overlaps the dark band.
+    <div className="flex flex-col items-center gap-4 rounded-lg border border-accent/40 bg-tint p-6 text-center">
       <div>
         <p className="text-base font-semibold text-text">
           📎 Apply saved recipe &ldquo;{name}&rdquo;?
@@ -48,6 +44,6 @@ export function RecipeBanner({ name, fileName, onRun, onReview }: RecipeBannerPr
           Review mapping instead
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
