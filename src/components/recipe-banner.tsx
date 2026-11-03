@@ -1,6 +1,5 @@
 "use client";
 
-
 interface RecipeBannerProps {
   name: string;
   fileName: string;
@@ -16,34 +15,37 @@ interface RecipeBannerProps {
 export function RecipeBanner({ name, fileName, onRun, onReview }: RecipeBannerProps) {
   return (
     // Opaque (bg-tint, not a translucent tint): this card overlaps the dark band.
-    <div className="flex flex-col items-center gap-4 rounded-lg border border-accent/40 bg-tint p-6 text-center">
+    <section
+      aria-labelledby="recipe-title"
+      className="flex flex-col gap-5 rounded-lg border border-accent/40 bg-tint p-6 md:p-8"
+    >
       <div>
-        <p className="text-base font-semibold text-text">
-          📎 Apply saved recipe &ldquo;{name}&rdquo;?
-        </p>
-        <p className="mt-1 text-sm text-text-muted">
-          <span className="font-mono text-text">{fileName}</span> matches this recipe&rsquo;s
-          bank format — it&rsquo;ll skip straight to a categorised P&amp;L, reusing everything
-          it already knows about your merchants.
+        <h2 id="recipe-title" className="font-display text-[22px] font-semibold tracking-tight text-text">
+          Apply your saved recipe &ldquo;{name}&rdquo;?
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-text-muted">
+          <span className="font-mono text-text">{fileName}</span> matches this recipe&rsquo;s bank
+          format. It will skip straight to a categorised P&amp;L and reuse what it already knows
+          about your merchants.
         </p>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
         <button
           type="button"
           onClick={onRun}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg transition-opacity hover:opacity-90"
+          className="min-h-12 cursor-pointer rounded-full bg-cta px-6 text-[15px] font-semibold text-cta-text transition-opacity hover:opacity-90"
         >
-          ▶ Run recipe
+          Run recipe
         </button>
         <button
           type="button"
           onClick={onReview}
-          className="text-sm text-text-muted underline-offset-4 hover:text-accent hover:underline"
+          className="min-h-11 cursor-pointer text-sm font-medium text-accent underline underline-offset-4 hover:opacity-80"
         >
           Review mapping instead
         </button>
       </div>
-    </div>
+    </section>
   );
 }

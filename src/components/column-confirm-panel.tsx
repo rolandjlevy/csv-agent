@@ -9,6 +9,7 @@ import {
 } from "@/lib/canonical-preview";
 import { CsvPreview } from "@/components/csv-preview";
 import { Select } from "@/components/select";
+import { CARD } from "@/lib/card-style";
 import { listSavedProfiles, type SavedProfile } from "@/lib/saved-profiles";
 
 interface ColumnConfirmPanelProps {
@@ -33,7 +34,7 @@ function Field({ label, children }: { label: string; children: (labelId: string)
   const labelId = useId();
   return (
     <div className="flex flex-col gap-1.5">
-      <span id={labelId} className="text-[11px] font-medium uppercase tracking-wide text-text-faint">
+      <span id={labelId} className="text-[13px] font-medium text-text-muted">
         {label}
       </span>
       {children(labelId)}
@@ -111,22 +112,22 @@ export function ColumnConfirmPanel({
   const isSplit = edited.amountConvention !== "signed";
 
   return (
-    <div className="flex flex-col gap-5 rounded-lg border border-border-subtle bg-bg-surface p-5">
+    <div className={`flex flex-col gap-6 ${CARD} md:p-8`}>
       <div>
-        <h2 className="text-lg font-semibold text-text">Confirm the columns</h2>
+        <h2 className="font-display text-[22px] font-semibold tracking-tight text-text">Confirm the columns</h2>
         <p className="mt-1 text-sm text-text-muted">
           We detected how to read{" "}
           <span className="font-mono text-text">{fileName}</span>
           {edited.bankName ? ` (${edited.bankName})` : ""}. Edit anything that looks wrong, then
           continue.
         </p>
-        <p className="mt-1 text-xs text-text-faint">
+        <p className="mt-1 text-[13px] text-text-faint">
           Header detected on row {edited.headerRowIndex + 1} of the file.
         </p>
         {selectedSaved && (
-          <p className="mt-2 rounded-md bg-accent-muted px-3 py-2 text-xs text-accent">
-            📎 Using your saved &quot;{selectedSaved.name}&quot; profile — review and continue, or
-            edit anything that&apos;s changed.
+          <p className="mt-3 rounded-md bg-tint px-3 py-2 text-sm text-text">
+            Using your saved &ldquo;{selectedSaved.name}&rdquo; profile. Review and continue, or edit
+            anything that&rsquo;s changed.
           </p>
         )}
       </div>
@@ -211,10 +212,12 @@ export function ColumnConfirmPanel({
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-text-faint">
+        <span className="text-[13px] font-medium text-text-muted">
           Preview (categories are assigned when you ask a question)
         </span>
-        <CsvPreview columns={[...CANONICAL_COLUMNS]} rows={preview} />
+        <div className="overflow-hidden rounded-md border border-border-subtle">
+          <CsvPreview columns={[...CANONICAL_COLUMNS]} rows={preview} />
+        </div>
       </div>
 
       <label className="flex flex-wrap items-center gap-2 text-sm text-text-muted">
@@ -241,16 +244,16 @@ export function ColumnConfirmPanel({
         <button
           type="button"
           onClick={onCancel}
-          className="text-sm text-text-muted underline-offset-4 hover:text-accent hover:underline"
+          className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-accent underline underline-offset-4 hover:opacity-80"
         >
-          ← Change file
+          &larr; Change file
         </button>
         <button
           type="button"
           onClick={() => onConfirm(edited, rememberFormat ? saveName : undefined)}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-bg transition-opacity hover:opacity-90"
+          className="min-h-12 cursor-pointer rounded-full bg-cta px-6 text-[15px] font-semibold text-cta-text transition-opacity hover:opacity-90"
         >
-          Looks good — continue →
+          Looks good, continue
         </button>
       </div>
     </div>
