@@ -20,7 +20,7 @@ export function Hero({ onSample, isLoading }: HeroProps) {
             className="font-display text-[2.625rem] font-bold leading-[1.04] tracking-tight text-white sm:text-5xl md:text-[4rem] md:leading-[1.02]"
           >
             Turn a bank statement into a P&amp;L,{" "}
-            <span className="text-band-text">then ask it anything.</span>
+            <span className="text-hero-accent">then ask it anything.</span>
           </h1>
 
           <p className="max-w-md text-base leading-relaxed md:text-[17px]">
