@@ -22,6 +22,8 @@
   /* The one bright action colour, used on the band and for primary actions. */
   --cta: #22d3ee;
   --cta-text: #04232b;
+  /* The saturated accent for the second half of the hero headline. */
+  --hero-accent: #8ee8f6;
   --tool-blue: #2563eb;
   --tool-blue-bg: rgba(37, 99, 235, 0.08);
   --thinking-amber: #b45309;
@@ -55,6 +57,7 @@
   --band-faint: #a8cbd6;
   --cta: #22d3ee;
   --cta-text: #04232b;
+  --hero-accent: #8ee8f6;
   color-scheme: dark;
 }
 
@@ -81,6 +84,7 @@
   --color-band-faint: var(--band-faint);
   --color-cta: var(--cta);
   --color-cta-text: var(--cta-text);
+  --color-hero-accent: var(--hero-accent);
 
   --font-sans: var(--font-inter), system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;

@@ -1,13 +1,14 @@
-// The Statement Sorter mark: three category bars (green, blue, purple) on a
-// white tile, matching the colours used for categories across the app. The
-// tile is white so the mark reads on the dark teal band.
+// The Statement Sorter mark: three category bars (cyan, deep teal, amber) on a
+// white tile. The cyan and teal come from the site's own palette and the amber
+// is the "needs a look" colour. The tile is white so the mark reads on the dark
+// teal band.
 export function LogoMark({ className = 'h-9 w-9' }: { className?: string }) {
   return (
     <svg viewBox="0 0 40 40" aria-hidden="true" className={`shrink-0 ${className}`}>
       <rect width="40" height="40" rx="10" fill="#ffffff" />
-      <rect x="9" y="10" width="22" height="5" rx="2.5" fill="#15803d" />
-      <rect x="9" y="18" width="17" height="5" rx="2.5" fill="#2563eb" />
-      <rect x="9" y="26" width="12" height="5" rx="2.5" fill="#7e22ce" />
+      <rect x="9" y="10" width="22" height="5" rx="2.5" fill="#06b6d4" />
+      <rect x="9" y="18" width="17" height="5" rx="2.5" fill="#0e7490" />
+      <rect x="9" y="26" width="12" height="5" rx="2.5" fill="#f59e0b" />
     </svg>
   );
 }
