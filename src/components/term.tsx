@@ -82,7 +82,7 @@ export function Term({ children, detail, onBand = false }: TermProps) {
             style={{ marginLeft: nudge }}
             className={`absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-lg px-3 py-2 text-left text-xs font-normal leading-relaxed shadow-lg ${
               onBand
-                ? "bg-[#0f1b33] text-[#e6edf7]"
+                ? "bg-[#0f1b33] text-[#e6edf7] dark:bg-bg-elevated dark:text-text dark:ring-1 dark:ring-border"
                 : "border border-border bg-bg-elevated text-text-muted"
             }`}
           >
