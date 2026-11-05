@@ -33,24 +33,26 @@
 }
 
 .dark {
-  --bg: #09090b;
-  --bg-surface: #18181b;
-  --bg-elevated: #27272a;
-  --border: #3f3f46;
-  --border-subtle: #27272a;
-  --text: #fafafa;
-  --text-muted: #a1a1aa;
-  --text-faint: #8b8b94;
-  --accent: #22c55e;
-  --accent-muted: rgba(34, 197, 94, 0.1);
-  --tool-blue: #3b82f6;
-  --tool-blue-bg: rgba(59, 130, 246, 0.08);
-  --thinking-amber: #f59e0b;
-  --thinking-bg: rgba(245, 158, 11, 0.06);
-  --error: #ef4444;
-  --money: #4ade80;
-  --tint: #10202a;
-  --band: #04242e;
+  /* Dark mode keeps the light theme's hue: every neutral is tinted toward the
+     band teal, and the accent is the same cyan family as the CTA. */
+  --bg: #06171d;
+  --bg-surface: #0d2630;
+  --bg-elevated: #123240;
+  --border: #21485a;
+  --border-subtle: #1b3c4a;
+  --text: #e6f2f5;
+  --text-muted: #9fbcc6;
+  --text-faint: #86a4af;
+  --accent: #5cc8e0;
+  --accent-muted: rgba(92, 200, 224, 0.12);
+  --tool-blue: #7cb8ff;
+  --tool-blue-bg: rgba(124, 184, 255, 0.12);
+  --thinking-amber: #f5b84a;
+  --thinking-bg: rgba(245, 184, 74, 0.08);
+  --error: #f87171;
+  --money: #6ee7a0;
+  --tint: #0c2c38;
+  --band: #083442;
   --band-text: #cfe6ec;
   --band-faint: #a8cbd6;
   --cta: #22d3ee;

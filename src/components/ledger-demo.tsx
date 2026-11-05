@@ -14,11 +14,11 @@ const ROWS: { date: string; text: string; amount: string; tag: string; tone: Ton
 ];
 
 const CHIP: Record<Tone, string> = {
-  income: "bg-[#d9f1e1] text-[#14532d]",
-  cost: "bg-[#dde6fd] text-[#1e3a8a]",
-  overhead: "bg-[#eddcfa] text-[#581c87]",
-  off: "bg-[#e4e8ef] text-[#394152]",
-  review: "bg-[#fde8b0] text-[#7c2d12]",
+  income: "bg-[#d9f1e1] text-[#14532d] dark:bg-[rgba(74,222,128,0.16)] dark:text-[#8fe3ad]",
+  cost: "bg-[#dde6fd] text-[#1e3a8a] dark:bg-[rgba(96,165,250,0.18)] dark:text-[#a5c8fb]",
+  overhead: "bg-[#eddcfa] text-[#581c87] dark:bg-[rgba(192,132,252,0.18)] dark:text-[#d6b0fb]",
+  off: "bg-[#e4e8ef] text-[#394152] dark:bg-[rgba(148,163,184,0.18)] dark:text-[#c3d0d8]",
+  review: "bg-[#fde8b0] text-[#7c2d12] dark:bg-[rgba(251,191,36,0.18)] dark:text-[#f5d276]",
 };
 
 // `onPage` is for copies that sit on the page ground instead of the teal band.
@@ -28,14 +28,14 @@ export function LedgerDemo({ className = "", onPage = false }: { className?: str
       <div
         role="img"
         aria-label="Example: five bank lines sorted into income, cost of sales, overheads, a transfer kept off the P&L, and one item flagged for review. Net profit so far £1,143.63."
-        className="overflow-hidden rounded-lg bg-white text-[#0f1b33] shadow-[0_0_0_1px_rgba(207,230,236,0.3),0_6px_16px_-10px_rgba(2,20,28,0.3)]"
+        className="overflow-hidden rounded-lg bg-bg-surface text-text shadow-[0_0_0_1px_rgba(207,230,236,0.3),0_6px_16px_-10px_rgba(2,20,28,0.3)] dark:shadow-[0_0_0_1px_rgba(92,200,224,0.28),0_24px_48px_-24px_rgba(0,8,12,0.7)]"
       >
-        <div className="flex items-baseline justify-between bg-[#eceff4] px-4 py-2 text-xs text-[#475169]">
+        <div className="flex items-baseline justify-between bg-bg-elevated px-4 py-2 text-xs text-text-muted">
           <span>Bank statement, October</span>
           <span>Where it lands</span>
         </div>
 
-        <ul aria-hidden="true" className="divide-y divide-[#dde3ec]">
+        <ul aria-hidden="true" className="divide-y divide-border-subtle">
           {ROWS.map((r, i) => (
             <li
               key={r.text}
@@ -43,7 +43,7 @@ export function LedgerDemo({ className = "", onPage = false }: { className?: str
             >
               <div className="min-w-0">
                 <p className="truncate font-mono text-[13px]">{r.text}</p>
-                <p className="mt-0.5 flex gap-3 font-mono text-xs text-[#5b6478]">
+                <p className="mt-0.5 flex gap-3 font-mono text-xs text-text-faint">
                   <span>{r.date}</span>
                   <span className="tabular-nums">{r.amount}</span>
                 </p>
@@ -60,7 +60,7 @@ export function LedgerDemo({ className = "", onPage = false }: { className?: str
 
         <div
           aria-hidden="true"
-          className="flex items-baseline justify-between border-t border-[#c9d1de] bg-[#eceff4] px-4 py-3"
+          className="flex items-baseline justify-between border-t border-border bg-bg-elevated px-4 py-3"
         >
           <span className="text-sm font-medium">Net profit so far</span>
           <span className="font-mono text-base font-medium tabular-nums">£1,143.63</span>
